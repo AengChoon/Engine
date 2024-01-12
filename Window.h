@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "EngineWin.h"
 #include "EngineException.h"
+#include "Keyboard.h"
 
 class WindowClass
 {
@@ -42,6 +43,9 @@ private:
 	static LRESULT WINAPI HandleMessageThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	LRESULT HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+public:
+	Keyboard MyKeyboard;
+
 private:
 	static inline WindowClass WindowClassInstance;
 
@@ -50,8 +54,6 @@ private:
 	INT32 Height;
 };
 
-#define WINDOW_EXCEPTION(ResultHandle) WindowException(__LINE__, __FILE__, ResultHandle)
-#define WINDOW_LAST_EXCEPTION() WindowException(__LINE__, __FILE__, GetLastError())
 class WindowException : public EngineException
 {
 public:

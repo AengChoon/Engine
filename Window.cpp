@@ -1,5 +1,7 @@
 ﻿#include "Window.h"
 #include <sstream>
+#define WINDOW_EXCEPTION(ResultHandle) WindowException(__LINE__, __FILE__, ResultHandle)
+#define WINDOW_LAST_EXCEPTION() WindowException(__LINE__, __FILE__, GetLastError())
 
 WindowClass::WindowClass() : HandleInstance(GetModuleHandle(nullptr))
 {
@@ -110,6 +112,36 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			PostQuitMessage(0);
 			return 0;
 		}
+	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-killfocus
+	case WM_KILLFOCUS:
+		{
+			MyKeyboard.ClearState();
+		}
+		break;
+	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
+	case WM_KEYDOWN: [[fallthrough]];
+	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-syskeydown
+	case WM_SYSKEYDOWN:
+		{
+			// AutoRepeat가 활성화 되지 않았으면 꾹 누르고 있을 때 보내지는 메시지(30번 째 비트가 1)는 처리하지 않는다.
+			if (!MyKeyboard.IsAutoRepeatEnabled() && lParam & 0x40000000) { break; }
+			MyKeyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
+		}
+		break;
+	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-keyup
+	case WM_KEYUP: [[fallthrough]];
+	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-syskeyup
+	case WM_SYSKEYUP:
+		{
+			MyKeyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
+		}
+		break;
+	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-char
+	case WM_CHAR:
+		{
+			MyKeyboard.OnChar(static_cast<unsigned char>(wParam));
+		}
+		break;
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
