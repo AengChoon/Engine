@@ -1,6 +1,8 @@
 ﻿#pragma once
+#include <memory>
 #include "EngineWin.h"
 #include "EngineException.h"
+#include "Graphics.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 
@@ -41,6 +43,11 @@ public:
 
 	static std::optional<int> ProcessMessages();
 
+	Graphics& GetGraphics() const
+	{
+		return *MyGraphics;
+	}
+
 private:
 	static LRESULT WINAPI HandleMessageSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI HandleMessageThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -56,6 +63,7 @@ private:
 	HWND Handle;
 	int Width;
 	int Height;
+	std::unique_ptr<Graphics> MyGraphics;
 };
 
 class WindowException : public EngineException

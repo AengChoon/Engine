@@ -15,4 +15,5 @@ int App::Run()
 
 void App::DoFrame()
 {
+	MyWindow.GetGraphics().EndFrame();
 }

@@ -75,6 +75,7 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 	 * Show Window
 	 */
 	ShowWindow(Handle, SW_SHOW);
+	MyGraphics = std::make_unique<Graphics>(Handle);
 }
 
 Window::~Window()
