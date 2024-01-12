@@ -39,6 +39,8 @@ public:
 	Window& operator=(Window&&) = delete;
 	~Window();
 
+	static std::optional<int> ProcessMessages();
+
 private:
 	static LRESULT WINAPI HandleMessageSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI HandleMessageThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

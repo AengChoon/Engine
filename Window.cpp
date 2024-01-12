@@ -1,7 +1,5 @@
 ﻿#include "Window.h"
 #include <sstream>
-#define WINDOW_EXCEPTION(ResultHandle) WindowException(__LINE__, __FILE__, ResultHandle)
-#define WINDOW_LAST_EXCEPTION() WindowException(__LINE__, __FILE__, GetLastError())
 
 WindowClass::WindowClass() : HandleInstance(GetModuleHandle(nullptr))
 {
@@ -56,7 +54,7 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 
 	if (!AdjustWindowRect(&WindowRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE))
 	{
-		throw WINDOW_LAST_EXCEPTION();
+		throw WindowException(__LINE__, __FILE__, GetLastError());
 	}
 
 	/**
@@ -69,7 +67,7 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 
 	if (!Handle)
 	{
-		throw WINDOW_LAST_EXCEPTION();
+		throw WindowException(__LINE__, __FILE__, GetLastError());
 	}
 
 	/**
@@ -82,6 +80,24 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 Window::~Window()
 {
 	DestroyWindow(Handle);
+}
+
+std::optional<int> Window::ProcessMessages()
+{
+	MSG Message;
+
+	while (PeekMessage(&Message, nullptr, 0, 0, PM_REMOVE))
+	{
+		if (Message.message == WM_QUIT)
+		{
+			return std::optional{static_cast<int>(Message.wParam)};
+		}
+
+		TranslateMessage(&Message);
+		DispatchMessage(&Message);
+	}
+
+	return std::nullopt;
 }
 
 LRESULT WINAPI Window::HandleMessageSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)

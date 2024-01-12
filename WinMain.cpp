@@ -1,22 +1,11 @@
-#include "Window.h"
+#include "App.h"
 
 // https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-winmain
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	try
 	{
-		Window MyWindow {800, 300, WindowClass::GetName()};
-
-		MSG Message;
-		BOOL Result;
-
-		while ((Result = GetMessage(&Message, nullptr, 0, 0)) > 0)
-		{
-			TranslateMessage(&Message);
-			DispatchMessage(&Message);
-		}
-
-		return Result == -1 ? -1 : static_cast<int>(Message.wParam);
+		return App{}.Run();
 	}
 	catch (const EngineException& InException)
 	{
