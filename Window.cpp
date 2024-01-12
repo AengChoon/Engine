@@ -45,7 +45,8 @@ HINSTANCE WindowClass::GetHandleInstance() const
 	return HandleInstance;
 }
 
-Window::Window(INT32 InWidth, INT32 InHeight, const wchar_t* InName)
+Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
+	: Width(InWidth), Height(InHeight)
 {
 	RECT WindowRect;
 	WindowRect.left = 100;
@@ -53,7 +54,7 @@ Window::Window(INT32 InWidth, INT32 InHeight, const wchar_t* InName)
 	WindowRect.top = 100;
 	WindowRect.bottom = InHeight + WindowRect.top;
 
-	if (FAILED(AdjustWindowRect(&WindowRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE)))
+	if (!AdjustWindowRect(&WindowRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE))
 	{
 		throw WINDOW_LAST_EXCEPTION();
 	}
@@ -140,6 +141,63 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CHAR:
 		{
 			MyKeyboard.OnChar(static_cast<unsigned char>(wParam));
+		}
+		break;
+	case WM_MOUSEMOVE:
+		{
+			if (const auto [X, Y] = MAKEPOINTS(lParam); X >= 0 && X < Width && Y >= 0 && Y < Height)
+			{
+				MyMouse.OnMouseMove(X, Y);
+
+				if (!MyMouse.IsInWindow())
+				{
+					SetCapture(hWnd);
+					MyMouse.OnMouseEnter();
+				}
+			}
+			else
+			{
+				if (MyMouse.IsLeftPressed() || MyMouse.IsRightPressed())
+				{
+					MyMouse.OnMouseMove(X, Y);
+				}
+				else
+				{
+					ReleaseCapture();
+					MyMouse.OnMouseLeave();
+				}
+			}
+
+		}
+		break;
+	case WM_LBUTTONDOWN:
+		{
+			const auto [X, Y] = MAKEPOINTS(lParam);
+			MyMouse.OnLeftPressed(X, Y);
+		}
+		break;
+	case WM_RBUTTONDOWN:
+		{
+			const auto [X, Y] = MAKEPOINTS(lParam);
+			MyMouse.OnRightPressed(X, Y);
+		}
+		break;
+	case WM_LBUTTONUP:
+		{
+			const auto [X, Y] = MAKEPOINTS(lParam);
+			MyMouse.OnLeftReleased(X, Y);
+		}
+		break;
+	case WM_RBUTTONUP:
+		{
+			const auto [X, Y] = MAKEPOINTS(lParam);
+			MyMouse.OnRightReleased(X, Y);
+		}
+		break;
+	case WM_MOUSEWHEEL:
+		{
+			const auto [X, Y] = MAKEPOINTS(lParam);
+			MyMouse.OnWheelDelta(X, Y, GET_WHEEL_DELTA_WPARAM(wParam));
 		}
 		break;
 	}

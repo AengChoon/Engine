@@ -2,6 +2,7 @@
 #include "EngineWin.h"
 #include "EngineException.h"
 #include "Keyboard.h"
+#include "Mouse.h"
 
 class WindowClass
 {
@@ -31,7 +32,7 @@ class Window
 friend class WindowClass;
 
 public:
-	Window(INT32 InWidth, INT32 InHeight, const wchar_t* InName);
+	Window(int InWidth, int InHeight, const wchar_t* InName);
 	Window(const Window&) = delete;
 	Window(Window&&) = delete;
 	Window& operator=(const Window&) = delete;
@@ -45,13 +46,14 @@ private:
 
 public:
 	Keyboard MyKeyboard;
+	Mouse MyMouse;
 
 private:
 	static inline WindowClass WindowClassInstance;
 
 	HWND Handle;
-	INT32 Width;
-	INT32 Height;
+	int Width;
+	int Height;
 };
 
 class WindowException : public EngineException

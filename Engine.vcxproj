@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClCompile Include="EngineException.cpp" />
     <ClCompile Include="Keyboard.cpp" />
+    <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="WinMain.cpp" />
   </ItemGroup>
@@ -147,6 +148,7 @@
     <ClInclude Include="EngineException.h" />
     <ClInclude Include="EngineWin.h" />
     <ClInclude Include="Keyboard.h" />
+    <ClInclude Include="Mouse.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
