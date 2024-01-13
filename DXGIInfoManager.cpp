@@ -1,7 +1,6 @@
 ﻿#include "DXGIInfoManager.h"
-#include "EngineException.h"
-#include <dxgidebug.h>
 #include <memory>
+#include "EngineException.h"
 #pragma comment(lib, "dxguid.lib")
 
 DXGIInfoManager::DXGIInfoManager()
@@ -20,17 +19,9 @@ DXGIInfoManager::DXGIInfoManager()
 		throw ResultHandleException(__LINE__, __FILE__, GetLastError());
 	}
 	
-	if (const auto ResultHandle = DXGIDebugInterface(__uuidof(IDXGIInfoQueue), reinterpret_cast<void**>(&DXGIInfoQueue)); FAILED(ResultHandle))
+	if (const auto ResultHandle = DXGIDebugInterface(__uuidof(IDXGIInfoQueue), &DXGIInfoQueue); FAILED(ResultHandle))
 	{
 		throw ResultHandleException(__LINE__, __FILE__, ResultHandle);
-	}
-}
-
-DXGIInfoManager::~DXGIInfoManager()
-{
-	if (!DXGIInfoQueue)
-	{
-		DXGIInfoQueue->Release();
 	}
 }
 
@@ -61,7 +52,7 @@ std::vector<std::string> DXGIInfoManager::GetMessages() const
 			throw ResultHandleException(__LINE__, __FILE__, ResultHandle);
 		}
 
-		Messages.emplace_back( MessageBuffer->pDescription );
+		Messages.emplace_back(MessageBuffer->pDescription);
 	}
 
 	return Messages;

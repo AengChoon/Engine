@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <d3d11.h>
+#include "wrl/client.h"
 #include "DXGIInfoManager.h"
 
 class Graphics
@@ -10,15 +11,16 @@ public:
 	Graphics(Graphics&&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
 	Graphics& operator=(Graphics&&) = delete;
-	~Graphics();
+	~Graphics() = default;
 
 	void EndFrame();
 	void ClearBuffer(float InRed, float InGreen, float InBlue) const noexcept;
 
 private:
 	DXGIInfoManager InfoManager;
-	ID3D11Device* Device = nullptr;
-	ID3D11DeviceContext* DeviceContext = nullptr;
-	IDXGISwapChain* SwapChain = nullptr;
-	ID3D11RenderTargetView* RenderTargetView = nullptr;
+	
+	Microsoft::WRL::ComPtr<ID3D11Device> Device;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> DeviceContext;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> RenderTargetView;
 };

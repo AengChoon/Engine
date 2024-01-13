@@ -1,9 +1,8 @@
 ﻿#pragma once
+#include <dxgidebug.h>
 #include <string>
 #include <vector>
-#include "EngineWin.h"
-
-struct IDXGIInfoQueue;
+#include "wrl/client.h"
 
 class DXGIInfoManager
 {
@@ -13,12 +12,12 @@ public:
 	DXGIInfoManager(DXGIInfoManager&&) = delete;
 	DXGIInfoManager& operator=(const DXGIInfoManager&) = delete;
 	DXGIInfoManager& operator=(DXGIInfoManager&&) = delete;
-	~DXGIInfoManager();
+	~DXGIInfoManager() = default;
 
 	void Set() noexcept;
 	[[nodiscard]] std::vector<std::string> GetMessages() const;
 
 private:
 	unsigned long long Next = 0u;
-	IDXGIInfoQueue* DXGIInfoQueue = nullptr;
+	Microsoft::WRL::ComPtr<IDXGIInfoQueue> DXGIInfoQueue;
 };

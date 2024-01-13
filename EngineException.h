@@ -2,13 +2,8 @@
 #include <exception>
 #include <string>
 #include <vector>
-#include "DXGIInfoManager.h"
 #include "EngineWin.h"
 
-namespace Exception
-{
-	
-}
 class EngineException : public std::exception
 {
 public:

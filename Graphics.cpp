@@ -44,34 +44,24 @@ Graphics::Graphics(HWND InWindowHandle)
 	);
 	ResultHandleException::Check(__LINE__, __FILE__, CreateResult, InfoManager.GetMessages()); 
 
-	ID3D11Resource* BackBuffer = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11Resource> BackBuffer;
 	InfoManager.Set();
 	const auto BackBufferResult = SwapChain->GetBuffer
 	(
 		0,
 		__uuidof(ID3D11Resource),
-		reinterpret_cast<void**>(&BackBuffer)
+		&BackBuffer
 	);
 	ResultHandleException::Check(__LINE__, __FILE__, BackBufferResult, InfoManager.GetMessages());
 
 	InfoManager.Set();
 	const auto BackBufferRenderTargetResult = Device->CreateRenderTargetView
 	(
-		BackBuffer,
+		BackBuffer.Get(),
 		nullptr,
 		&RenderTargetView
 	);
 	ResultHandleException::Check(__LINE__, __FILE__, BackBufferRenderTargetResult, InfoManager.GetMessages());
-
-	BackBuffer->Release();
-}
-
-Graphics::~Graphics()
-{
-	if (Device) { Device->Release(); }
-	if (DeviceContext) { DeviceContext->Release(); }
-	if (SwapChain) { SwapChain->Release(); }
-	if (RenderTargetView) { RenderTargetView->Release(); }
 }
 
 void Graphics::EndFrame()
@@ -89,5 +79,5 @@ void Graphics::EndFrame()
 void Graphics::ClearBuffer(const float InRed, const float InGreen, const float InBlue) const noexcept
 {
 	const float Color[] = {InRed, InGreen, InBlue, 1.0f};
-	DeviceContext->ClearRenderTargetView(RenderTargetView, Color);
+	DeviceContext->ClearRenderTargetView(RenderTargetView.Get(), Color);
 }
