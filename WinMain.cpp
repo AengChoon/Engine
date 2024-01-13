@@ -1,4 +1,5 @@
 #include "App.h"
+#include "EngineException.h"
 
 // https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-winmain
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)

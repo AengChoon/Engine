@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <memory>
 #include "EngineWin.h"
-#include "EngineException.h"
 #include "Graphics.h"
 #include "Keyboard.h"
 #include "Mouse.h"
@@ -43,10 +42,7 @@ public:
 
 	static std::optional<int> ProcessMessages();
 
-	Graphics& GetGraphics() const
-	{
-		return *MyGraphics;
-	}
+	Graphics& GetGraphics() const;
 
 private:
 	static LRESULT WINAPI HandleMessageSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -64,34 +60,4 @@ private:
 	int Width;
 	int Height;
 	std::unique_ptr<Graphics> MyGraphics;
-};
-
-class WindowException : public EngineException
-{
-public:
-	WindowException(const int InLine, const char* InFile, const HRESULT InResultHandle) noexcept
-		: EngineException(InLine, InFile), ResultHandle(InResultHandle)
-	{}
-
-	const char* what() const noexcept override;
-
-	const char* GetType() const noexcept override
-	{
-		return "Engine Window Exception";
-	}
-
-	static std::string TranslateErrorCode(HRESULT InResultHandle) noexcept;
-
-	HRESULT GetErrorCode() const noexcept
-	{
-		return ResultHandle;
-	}
-
-	std::string GetErrorString() const noexcept
-	{
-		return TranslateErrorCode(ResultHandle);
-	}
-
-private:
-	HRESULT ResultHandle;
 };

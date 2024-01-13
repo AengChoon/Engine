@@ -1,4 +1,5 @@
 ﻿#include "Graphics.h"
+#include "EngineException.h"
 #pragma comment(lib, "d3d11.lib")
 
 Graphics::Graphics(HWND InWindowHandle)
@@ -19,13 +20,19 @@ Graphics::Graphics(HWND InWindowHandle)
 	SwapChainDesc.Windowed = TRUE;
 	SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	SwapChainDesc.Flags = 0;
+	
+	UINT CreateFlags = 0u;
+#ifndef NDEBUG
+	CreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
 
-	D3D11CreateDeviceAndSwapChain
+	InfoManager.Set();
+	const auto CreateResult = D3D11CreateDeviceAndSwapChain
 	(
 		nullptr,
 		D3D_DRIVER_TYPE_HARDWARE,
 		nullptr,
-		0,
+		CreateFlags,
 		nullptr,
 		0,
 		D3D11_SDK_VERSION,
@@ -35,10 +42,27 @@ Graphics::Graphics(HWND InWindowHandle)
 		nullptr,
 		&DeviceContext
 	);
+	ResultHandleException::Check(__LINE__, __FILE__, CreateResult, InfoManager.GetMessages()); 
 
 	ID3D11Resource* BackBuffer = nullptr;
-	SwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&BackBuffer));
-	Device->CreateRenderTargetView(BackBuffer, nullptr, &RenderTargetView);
+	InfoManager.Set();
+	const auto BackBufferResult = SwapChain->GetBuffer
+	(
+		0,
+		__uuidof(ID3D11Resource),
+		reinterpret_cast<void**>(&BackBuffer)
+	);
+	ResultHandleException::Check(__LINE__, __FILE__, BackBufferResult, InfoManager.GetMessages());
+
+	InfoManager.Set();
+	const auto BackBufferRenderTargetResult = Device->CreateRenderTargetView
+	(
+		BackBuffer,
+		nullptr,
+		&RenderTargetView
+	);
+	ResultHandleException::Check(__LINE__, __FILE__, BackBufferRenderTargetResult, InfoManager.GetMessages());
+
 	BackBuffer->Release();
 }
 
@@ -52,10 +76,17 @@ Graphics::~Graphics()
 
 void Graphics::EndFrame()
 {
-	SwapChain->Present(1u, 0u);
+	InfoManager.Set();
+	if (const HRESULT ResultHandle = SwapChain->Present(1u, 0u); FAILED(ResultHandle))
+	{
+		
+		ResultHandle == DXGI_ERROR_DEVICE_REMOVED
+							? ResultHandleException::Check(__LINE__, __FILE__, Device->GetDeviceRemovedReason())
+							: ResultHandleException::Check(__LINE__, __FILE__, ResultHandle, InfoManager.GetMessages());
+	}
 }
 
-void Graphics::ClearBuffer(float InRed, float InGreen, float InBlue) noexcept
+void Graphics::ClearBuffer(const float InRed, const float InGreen, const float InBlue) const noexcept
 {
 	const float Color[] = {InRed, InGreen, InBlue, 1.0f};
 	DeviceContext->ClearRenderTargetView(RenderTargetView, Color);

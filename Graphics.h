@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "EngineWin.h"
 #include <d3d11.h>
+#include "DXGIInfoManager.h"
 
 class Graphics
 {
@@ -13,9 +13,10 @@ public:
 	~Graphics();
 
 	void EndFrame();
-	void ClearBuffer(float InRed, float InGreen, float InBlue) noexcept;
+	void ClearBuffer(float InRed, float InGreen, float InBlue) const noexcept;
 
 private:
+	DXGIInfoManager InfoManager;
 	ID3D11Device* Device = nullptr;
 	ID3D11DeviceContext* DeviceContext = nullptr;
 	IDXGISwapChain* SwapChain = nullptr;

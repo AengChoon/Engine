@@ -1,5 +1,6 @@
 ﻿#include "Window.h"
 #include <sstream>
+#include "EngineException.h"
 
 WindowClass::WindowClass() : HandleInstance(GetModuleHandle(nullptr))
 {
@@ -54,7 +55,7 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 
 	if (!AdjustWindowRect(&WindowRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE))
 	{
-		throw WindowException(__LINE__, __FILE__, GetLastError());
+		throw ResultHandleException(__LINE__, __FILE__, GetLastError());
 	}
 
 	/**
@@ -67,7 +68,7 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 
 	if (!Handle)
 	{
-		throw WindowException(__LINE__, __FILE__, GetLastError());
+		throw ResultHandleException(__LINE__, __FILE__, GetLastError());
 	}
 
 	/**
@@ -99,6 +100,16 @@ std::optional<int> Window::ProcessMessages()
 	}
 
 	return std::nullopt;
+}
+
+Graphics& Window::GetGraphics() const
+{
+	if (!MyGraphics)
+	{
+		throw EngineException{__LINE__, __FILE__};
+	}
+
+	return *MyGraphics;
 }
 
 LRESULT WINAPI Window::HandleMessageSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -220,32 +231,4 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
-}
-
-const char* WindowException::what() const noexcept
-{
-	std::ostringstream StringStream;
-	StringStream << GetType() << std::endl
-				 << "[Error Code] " << GetErrorCode() << std::endl
-				 << "[Description] " << GetErrorString() << GetOriginString();
-
-	WhatBuffer = StringStream.str();
-	return WhatBuffer.c_str();
-}
-
-std::string WindowException::TranslateErrorCode(const HRESULT InResultHandle) noexcept
-{
-	char* MessageBuffer = nullptr;
-
-	if (!FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-	                   nullptr, InResultHandle, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-	                   reinterpret_cast<LPSTR>(&MessageBuffer), 0, nullptr))
-	{
-		return {"Unidentified error code"};
-	}
-
-	std::string ErrorString = MessageBuffer;
-	LocalFree(MessageBuffer);
-
-	return ErrorString;
 }
