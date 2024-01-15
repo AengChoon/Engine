@@ -1,6 +1,6 @@
 ﻿#include "DXGIInfoManager.h"
 #include <memory>
-#include "EngineException.h"
+#include "Exception.h"
 #pragma comment(lib, "dxguid.lib")
 
 DXGIInfoManager::DXGIInfoManager()
@@ -27,15 +27,19 @@ DXGIInfoManager::DXGIInfoManager()
 
 void DXGIInfoManager::Set() noexcept
 {
+#ifndef NDEBUG
 	Next = DXGIInfoQueue->GetNumStoredMessages(DXGI_DEBUG_ALL);
+#endif
 }
 
-std::vector<std::string> DXGIInfoManager::GetMessages() const
+std::vector<std::string> DXGIInfoManager::GetMessages()
 {
 	std::vector<std::string> Messages;
+
+#ifndef NDEBUG
 	const auto End = DXGIInfoQueue->GetNumStoredMessages(DXGI_DEBUG_ALL);
 
-	for(auto Index = Next; Index < End; Index++)
+	for (auto Index = Next; Index < End; Index++)
 	{
 		size_t MessageLength;
 
@@ -44,8 +48,8 @@ std::vector<std::string> DXGIInfoManager::GetMessages() const
 			throw ResultHandleException(__LINE__, __FILE__, ResultHandle);
 		}
 
-		auto Bytes = std::make_unique<byte[]>(MessageLength);
-		const auto MessageBuffer = reinterpret_cast<DXGI_INFO_QUEUE_MESSAGE*>(Bytes.get());
+		auto MessageBytes = std::make_unique<byte[]>(MessageLength);
+		const auto MessageBuffer = reinterpret_cast<DXGI_INFO_QUEUE_MESSAGE*>(MessageBytes.get());
 
 		if (const auto ResultHandle = DXGIInfoQueue->GetMessage(DXGI_DEBUG_ALL, Index, MessageBuffer, &MessageLength); FAILED(ResultHandle))
 		{
@@ -54,6 +58,7 @@ std::vector<std::string> DXGIInfoManager::GetMessages() const
 
 		Messages.emplace_back(MessageBuffer->pDescription);
 	}
+#endif
 
 	return Messages;
 }

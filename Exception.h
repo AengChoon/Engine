@@ -38,16 +38,40 @@ private:
 	std::string File;
 };
 
-class ResultHandleException final : public EngineException
+class InfoException : public EngineException
 {
 public:
-	ResultHandleException(int InLine, const char* InFile, const HRESULT InResultHandle, const std::vector<std::string>& InInfoMessages = {}) noexcept;
+	InfoException(int InLine, const char* InFile, const std::vector<std::string>& InInfoMessages = {}) noexcept;
 
 	const char* what() const noexcept override;
 
 	const char* GetType() const noexcept override
 	{
-		return "Engine Window Exception";
+		return "Engine Info Exception";
+	}
+
+	const std::string& GetErrorInfo() const noexcept
+	{
+		return InfoMessage;
+	}
+
+protected:
+	std::string InfoMessage;
+};
+
+
+class ResultHandleException final : public InfoException
+{
+public:
+	ResultHandleException(const int InLine, const char* InFile, const HRESULT InResultHandle, const std::vector<std::string>& InInfoMessages = {}) noexcept
+		: InfoException(InLine, InFile, InInfoMessages), ResultHandle(InResultHandle)
+	{}
+
+	const char* what() const noexcept override;
+
+	const char* GetType() const noexcept override
+	{
+		return "Engine Result Handle Exception";
 	}
 
 	static std::string TranslateErrorCode(HRESULT InResultHandle) noexcept;
@@ -62,14 +86,8 @@ public:
 		return TranslateErrorCode(ResultHandle);
 	}
 
-	const std::string& GetErrorInfo() const noexcept
-	{
-		return InfoMessage;
-	}
-
 	static void Check(int InLine, const char* InFile, HRESULT InResultHandle, const std::vector<std::string>& InInfoMessages = {});
 
 private:
 	HRESULT ResultHandle;
-	std::string InfoMessage;
 };

@@ -15,5 +15,6 @@ int App::Run()
 
 void App::DoFrame()
 {
+	MyWindow.GetGraphics().DrawTestTriangle();
 	MyWindow.GetGraphics().EndFrame();
 }

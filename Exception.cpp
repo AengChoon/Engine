@@ -1,4 +1,4 @@
-﻿#include "EngineException.h"
+﻿#include "Exception.h"
 #include <sstream>
 
 char const* EngineException::what() const noexcept
@@ -17,9 +17,8 @@ std::string EngineException::GetOriginString() const noexcept
 	return StringStream.str();
 }
 
-ResultHandleException::ResultHandleException(const int InLine, const char* InFile, const HRESULT InResultHandle,
-                                             const std::vector<std::string>& InInfoMessages) noexcept
-	: EngineException(InLine, InFile), ResultHandle(InResultHandle)
+InfoException::InfoException(const int InLine, const char* InFile, const std::vector<std::string>& InInfoMessages) noexcept
+	: EngineException(InLine, InFile)
 {
 	for (const auto& Message : InInfoMessages)
 	{
@@ -31,6 +30,22 @@ ResultHandleException::ResultHandleException(const int InLine, const char* InFil
 	{
 		InfoMessage.pop_back();
 	}
+}
+
+const char* InfoException::what() const noexcept
+{
+	std::ostringstream StringStream;
+	StringStream << GetType() << std::endl;
+
+	if (!InfoMessage.empty())
+	{
+		StringStream << "\n[Error Info]\n" << GetErrorInfo() << std::endl << std::endl;
+	}
+
+	StringStream << GetOriginString();
+
+	WhatBuffer = StringStream.str();
+	return WhatBuffer.c_str();
 }
 
 const char* ResultHandleException::what() const noexcept

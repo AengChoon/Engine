@@ -1,6 +1,7 @@
 ﻿#include "Window.h"
 #include <sstream>
-#include "EngineException.h"
+#include "Exception.h"
+#include "ExceptionMacros.h"
 
 WindowClass::WindowClass() : HandleInstance(GetModuleHandle(nullptr))
 {
@@ -55,7 +56,7 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 
 	if (!AdjustWindowRect(&WindowRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE))
 	{
-		throw ResultHandleException(__LINE__, __FILE__, GetLastError());
+		throw HRESULT_LAST_EXCEPTION();
 	}
 
 	/**
@@ -68,7 +69,7 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 
 	if (!Handle)
 	{
-		throw ResultHandleException(__LINE__, __FILE__, GetLastError());
+		throw HRESULT_LAST_EXCEPTION();
 	}
 
 	/**
@@ -106,7 +107,7 @@ Graphics& Window::GetGraphics() const
 {
 	if (!MyGraphics)
 	{
-		throw EngineException{__LINE__, __FILE__};
+		throw ENGINE_EXCEPTION();
 	}
 
 	return *MyGraphics;

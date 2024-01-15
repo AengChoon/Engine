@@ -15,6 +15,7 @@ public:
 
 	void EndFrame();
 	void ClearBuffer(float InRed, float InGreen, float InBlue) const noexcept;
+	void DrawTestTriangle();
 
 private:
 	DXGIInfoManager InfoManager;

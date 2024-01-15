@@ -14,10 +14,10 @@ public:
 	DXGIInfoManager& operator=(DXGIInfoManager&&) = delete;
 	~DXGIInfoManager() = default;
 
-	void Set() noexcept;
-	[[nodiscard]] std::vector<std::string> GetMessages() const;
+	static void Set() noexcept;
+	[[nodiscard]] static std::vector<std::string> GetMessages();
 
 private:
-	unsigned long long Next = 0u;
-	Microsoft::WRL::ComPtr<IDXGIInfoQueue> DXGIInfoQueue;
+	static inline unsigned long long Next = 0u;
+	static inline Microsoft::WRL::ComPtr<IDXGIInfoQueue> DXGIInfoQueue;
 };
