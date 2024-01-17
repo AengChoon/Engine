@@ -1,6 +1,5 @@
 ﻿#include "Graphics.h"
 #include <d3dcompiler.h>
-#include "Exception.h"
 #include "ExceptionMacros.h"
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "D3DCompiler.lib")
@@ -62,12 +61,50 @@ Graphics::Graphics(HWND InWindowHandle)
 		nullptr,
 		&RenderTargetView
 	))
+
+	D3D11_DEPTH_STENCIL_DESC DepthStencilDesc {};
+	DepthStencilDesc.DepthEnable = TRUE;
+	DepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	DepthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> DepthStencilState;
+	CHECK_HRESULT_EXCEPTION(Device->CreateDepthStencilState(&DepthStencilDesc, &DepthStencilState));
+
+	DeviceContext->OMSetDepthStencilState(DepthStencilState.Get(), 1u);
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> DepthStencilTexture;
+	D3D11_TEXTURE2D_DESC DepthStencilTextureDesc {};
+	DepthStencilTextureDesc.Width = 800u;
+	DepthStencilTextureDesc.Height = 600u;
+	DepthStencilTextureDesc.MipLevels = 1u;
+	DepthStencilTextureDesc.ArraySize = 1u;
+	DepthStencilTextureDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	DepthStencilTextureDesc.SampleDesc.Count = 1u;
+	DepthStencilTextureDesc.SampleDesc.Quality = 0u;
+	DepthStencilTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+	DepthStencilTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	CHECK_HRESULT_EXCEPTION(Device->CreateTexture2D(&DepthStencilTextureDesc, nullptr, &DepthStencilTexture));
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC DepthStencilViewDesc {};
+	DepthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	DepthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	DepthStencilViewDesc.Texture2D.MipSlice = 0u;
+	CHECK_HRESULT_EXCEPTION(Device->CreateDepthStencilView(DepthStencilTexture.Get(), &DepthStencilViewDesc, &DepthStencilView));
+
+	DeviceContext->OMSetRenderTargets(1u, RenderTargetView.GetAddressOf(), DepthStencilView.Get());
+
+	D3D11_VIEWPORT Viewport;
+	Viewport.Width = 800.0f;
+	Viewport.Height = 600.0f;
+	Viewport.MinDepth = 0.0f;
+	Viewport.MaxDepth = 1.0f;
+	Viewport.TopLeftX = 0.0f;
+	Viewport.TopLeftY = 0.0f;
+	DeviceContext->RSSetViewports(1u, &Viewport);
 }
 
 void Graphics::EndFrame()
 {
-	InfoManager.Set();
-
 	if (const HRESULT ResultHandle = SwapChain->Present(1u, 0u); FAILED(ResultHandle))
 	{
 		
@@ -86,102 +123,10 @@ void Graphics::ClearBuffer(const float InRed, const float InGreen, const float I
 {
 	const float Color[] = {InRed, InGreen, InBlue, 1.0f};
 	DeviceContext->ClearRenderTargetView(RenderTargetView.Get(), Color);
+	DeviceContext->ClearDepthStencilView(DepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u);
 }
 
-void Graphics::DrawTestTriangle()
+void Graphics::DrawIndexed(UINT InCount) const
 {
-	struct Vertex
-	{
-		float x;
-		float y;
-	};
-
-	constexpr Vertex Vertices[] =
-	{
-		{0.0f, 0.5f},
-		{0.5f, -0.5f},
-		{-0.5f, -0.5f}
-	};
-
-	Microsoft::WRL::ComPtr<ID3D11Buffer> VertexBuffer;
-	D3D11_BUFFER_DESC VertexBufferDescription;
-	VertexBufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	VertexBufferDescription.Usage = D3D11_USAGE_DEFAULT;
-	VertexBufferDescription.CPUAccessFlags = 0u;
-	VertexBufferDescription.MiscFlags = 0u;
-	VertexBufferDescription.ByteWidth = sizeof(Vertices);
-	VertexBufferDescription.StructureByteStride = sizeof(Vertex);
-
-	D3D11_SUBRESOURCE_DATA VertexData;
-	VertexData.pSysMem = Vertices;
-
-	InfoManager.Set();
-	const auto CreateVertexBufferResult = Device->CreateBuffer(&VertexBufferDescription, &VertexData, &VertexBuffer);
-	ResultHandleException::Check(__LINE__, __FILE__, CreateVertexBufferResult, InfoManager.GetMessages());
-
-	constexpr UINT Stride = sizeof(Vertex);
-	constexpr UINT Offset = 0u;
-	DeviceContext->IASetVertexBuffers(0u, 1u, VertexBuffer.GetAddressOf(), &Stride, &Offset);
-
-	HRESULT ResultHandle;
-	Microsoft::WRL::ComPtr<ID3DBlob> Blob;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> PixelShader;
-
-	InfoManager.Set();
-	ResultHandle = D3DReadFileToBlob(L"PixelShader.cso", &Blob);
-	ResultHandleException::Check(__LINE__, __FILE__, ResultHandle, InfoManager.GetMessages());
-
-	InfoManager.Set();
-	ResultHandle = Device->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &PixelShader);
-	ResultHandleException::Check(__LINE__, __FILE__, ResultHandle, InfoManager.GetMessages());
-	DeviceContext->PSSetShader(PixelShader.Get(), nullptr, 0u);
-
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> VertexShader;
-
-	DXGIInfoManager::Set();
-	ResultHandle = D3DReadFileToBlob(L"VertexShader.cso", &Blob);
-	ResultHandleException::Check(__LINE__, __FILE__, ResultHandle, InfoManager.GetMessages());
-
-	InfoManager.Set();
-	ResultHandle = Device->CreateVertexShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &VertexShader);
-	ResultHandleException::Check(__LINE__, __FILE__, ResultHandle, InfoManager.GetMessages());
-	DeviceContext->VSSetShader(VertexShader.Get(), nullptr, 0u);
-
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> InputLayout;
-
-	constexpr D3D11_INPUT_ELEMENT_DESC InputElementDescription[] =
-	{
-		{"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
-	};
-	ResultHandle = Device->CreateInputLayout
-	(
-		InputElementDescription,
-		static_cast<UINT>(std::size(InputElementDescription)),
-		Blob->GetBufferPointer(),
-		Blob->GetBufferSize(),
-		&InputLayout
-	);
-
-	DeviceContext->IASetInputLayout(InputLayout.Get());
-
-	DeviceContext->OMSetRenderTargets(1u, RenderTargetView.GetAddressOf(), nullptr);
-
-	DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	D3D11_VIEWPORT Viewport;
-	Viewport.Width = 800;
-	Viewport.Height = 600;
-	Viewport.MinDepth = 0;
-	Viewport.MaxDepth = 1;
-	Viewport.TopLeftX = 0;
-	Viewport.TopLeftY = 0;
-	DeviceContext->RSSetViewports(1u, &Viewport);
-
-	InfoManager.Set();
-	DeviceContext->Draw(static_cast<UINT>(std::size(Vertices)), 0u);
-	auto a = InfoManager.GetMessages();
-	if (!a.empty())
-	{
-		throw InfoException{__LINE__, __FILE__, a};
-	}
+	CHECK_INFO_EXCEPTION(DeviceContext->DrawIndexed(InCount, 0u, 0u))
 }

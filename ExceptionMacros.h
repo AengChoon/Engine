@@ -1,7 +1,22 @@
 ﻿#pragma once
+#include "Exception.h"
 
 #define ENGINE_EXCEPTION()																			\
 	EngineException{__LINE__, __FILE__}
+
+#define INFO_EXCEPTION(InMessages)																	\
+	InfoException{__LINE__, __FILE__, InMessages}
+
+#define CHECK_INFO_EXCEPTION(InFunction)															\
+	DXGIInfoManager::Set();																			\
+	(InFunction);																					\
+	{																								\
+		auto InfoMessages =  DXGIInfoManager::GetMessages();										\
+		if (!InfoMessages.empty())																	\
+		{																							\
+			throw INFO_EXCEPTION(InfoMessages);														\
+		}																							\
+	}
 
 #define HRESULT_EXCEPTION(InResultHandle)															\
 	ResultHandleException{__LINE__, __FILE__, (InResultHandle), DXGIInfoManager::GetMessages()}
