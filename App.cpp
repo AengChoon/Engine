@@ -1,9 +1,12 @@
 ﻿#include "App.h"
 #include <random>
-
 #include "Ball.h"
 #include "Box.h"
 #include "EngineMath.h"
+#include "GDIPlusManager.h"
+#include "TexturedBox.h"
+
+GDIPlusManager gdipm;
 
 App::App()
 	: MyWindow(800, 600, WindowClass::GetName())
@@ -23,6 +26,8 @@ App::App()
 				return std::make_unique<Box>(MyGraphics, RandomGenerator, A, B, C, D, E);
 			case 1:
 				return std::make_unique<Ball>(MyGraphics, RandomGenerator, A, B, C, D, Longitude, Latitude);
+			case 2:
+				return std::make_unique<TexturedBox>(MyGraphics, RandomGenerator, A, B, C, D);
 			default: return {};
 			}
 		}
@@ -37,7 +42,7 @@ App::App()
 		std::uniform_real_distribution<float> E {0.4f, 3.0f};
 		std::uniform_int_distribution<int> Latitude {5, 20};
 		std::uniform_int_distribution<int> Longitude {10, 40};
-		std::uniform_int_distribution<int> Type {0, 1};
+		std::uniform_int_distribution<int> Type {0, 2};
 	};
 
 	const Factory MyFactory {MyWindow.GetGraphics()};

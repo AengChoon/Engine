@@ -11,7 +11,7 @@
 	DXGIInfoManager::Set();																			\
 	(InFunction);																					\
 	{																								\
-		auto InfoMessages =  DXGIInfoManager::GetMessages();										\
+		auto InfoMessages = DXGIInfoManager::GetMessages();										\
 		if (!InfoMessages.empty())																	\
 		{																							\
 			throw INFO_EXCEPTION(InfoMessages);														\

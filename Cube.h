@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "IndexedTriangleList.h"
-#include <DirectXMath.h>
 
 class Cube
 {
@@ -10,21 +9,15 @@ public:
 	{
 		constexpr float EdgeLength = 1.0f / 2.0f;
 
-		std::vector<DirectX::XMFLOAT3> Positions;
-		Positions.emplace_back(-EdgeLength,-EdgeLength, -EdgeLength);		// 0
-		Positions.emplace_back(EdgeLength,-EdgeLength, -EdgeLength);		// 1
-		Positions.emplace_back(-EdgeLength,EdgeLength, -EdgeLength);		// 2
-		Positions.emplace_back(EdgeLength,EdgeLength, -EdgeLength);		// 3
-		Positions.emplace_back(-EdgeLength,-EdgeLength, EdgeLength);		// 4
-		Positions.emplace_back(EdgeLength,-EdgeLength, EdgeLength);		// 5
-		Positions.emplace_back(-EdgeLength,EdgeLength, EdgeLength);		// 6
-		Positions.emplace_back(EdgeLength, EdgeLength, EdgeLength);		// 7
-
-		std::vector<T> Vertices {Positions.size()};
-		for (size_t Index = 0; Index < Positions.size(); ++Index)
-		{
-			Vertices[Index].Position = Positions[Index];
-		}
+		std::vector<T> Vertices {8};
+		Vertices[0].Position = {-EdgeLength,-EdgeLength, -EdgeLength};
+		Vertices[1].Position = {EdgeLength,-EdgeLength, -EdgeLength};
+		Vertices[2].Position = {-EdgeLength,EdgeLength, -EdgeLength};
+		Vertices[3].Position = {EdgeLength,EdgeLength, -EdgeLength};
+		Vertices[4].Position = {-EdgeLength,-EdgeLength, EdgeLength};
+		Vertices[5].Position = {EdgeLength,-EdgeLength, EdgeLength};
+		Vertices[6].Position = {-EdgeLength,EdgeLength, EdgeLength};
+		Vertices[7].Position = {EdgeLength, EdgeLength, EdgeLength};
 
 		return {
 					std::move(Vertices),
@@ -35,6 +28,67 @@ public:
 						4,5,7, 4,7,6,
 						0,4,2, 2,4,6,
 						0,1,4, 1,5,4
+					}
+				};
+	}
+
+	template<typename T>
+	static IndexedTriangleList<T> MakeTextured()
+	{
+		constexpr float EdgeLength = 1.0f / 2.0f;
+
+		std::vector<T> Vertices {14};
+		Vertices[0].Position = {-EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[0].Texture  = {2.0f / 3.0f, 0.0f / 4.0f};
+
+		Vertices[1].Position = {EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[1].Texture  = {1.0f / 3.0f, 0.0f / 4.0f};
+
+		Vertices[2].Position = {-EdgeLength, EdgeLength, -EdgeLength};
+		Vertices[2].Texture  = {2.0f / 3.0f, 1.0f / 4.0f};
+
+		Vertices[3].Position = {EdgeLength, EdgeLength, -EdgeLength};
+		Vertices[3].Texture  = {1.0f / 3.0f, 1.0f / 4.0f};
+
+		Vertices[4].Position = {-EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[4].Texture  = {2.0f / 3.0f, 3.0f / 4.0f};
+
+		Vertices[5].Position = {EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[5].Texture  = {1.0f / 3.0f, 3.0f / 4.0f};
+
+		Vertices[6].Position = {-EdgeLength, EdgeLength, EdgeLength};
+		Vertices[6].Texture  = {2.0f / 3.0f, 2.0f / 4.0f};
+
+		Vertices[7].Position = {EdgeLength, EdgeLength, EdgeLength};
+		Vertices[7].Texture  = {1.0f / 3.0f, 2.0f / 4.0f};
+
+		Vertices[8].Position = {-EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[8].Texture  = {2.0f / 3.0f, 4.0f / 4.0f};
+
+		Vertices[9].Position = {EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[9].Texture  = {1.0f / 3.0f, 4.0f / 4.0f};
+
+		Vertices[10].Position = {-EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[10].Texture  = {3.0f / 3.0f, 1.0f / 4.0f};
+
+		Vertices[11].Position = {-EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[11].Texture  = {3.0f / 3.0f, 2.0f / 4.0f};
+
+		Vertices[12].Position = {EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[12].Texture  = {0.0f / 3.0f, 1.0f / 4.0f};
+
+		Vertices[13].Position = {EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[13].Texture  = {0.0f / 3.0f, 2.0f / 4.0f};
+
+		return {
+					std::move(Vertices),
+					{
+						0,2,1,   2,3,1,
+						4,8,5,   5,8,9,
+						2,6,3,   3,6,7,
+						4,5,7,   4,7,6,
+						2,10,11, 2,11,6,
+						12,3,7,  12,7,13
 					}
 				};
 	}
