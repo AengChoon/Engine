@@ -5,8 +5,10 @@
 #include "EngineMath.h"
 #include "GDIPlusManager.h"
 #include "TexturedBox.h"
+#include "imgui/imgui_impl_dx11.h"
+#include "imgui/imgui_impl_win32.h"
 
-GDIPlusManager gdipm;
+GDIPlusManager GDIPlus;
 
 App::App()
 	: MyWindow(800, 600, WindowClass::GetName())
@@ -66,14 +68,22 @@ int App::Run()
 
 void App::DoFrame()
 {
-	auto DeltaTime = MyTimer.Mark();
-	MyWindow.GetGraphics().ClearBuffer(0.07f, 0.0f, 0.12f);
+	auto DeltaTime = MyTimer.Mark() * SpeedFactor;
+
+	MyWindow.GetGraphics().BeginFrame(0.07f, 0.0f, 0.12f);
 
 	for (const auto& Drawable : Drawables)
 	{
 		Drawable->Update(DeltaTime);
 		Drawable->Draw(MyWindow.GetGraphics());
 	}
+
+	if (ImGui::Begin("Simulation"))
+	{
+		ImGui::SliderFloat("Speed", &SpeedFactor, 0.0f, 4.0f);
+		ImGui::Text("%d FPS", static_cast<int>(ImGui::GetIO().Framerate));
+	}
+	ImGui::End();
 
 	MyWindow.GetGraphics().EndFrame();
 }

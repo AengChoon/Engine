@@ -2,6 +2,9 @@
 #include <sstream>
 #include "Exception.h"
 #include "ExceptionMacros.h"
+#include "imgui/imgui_impl_win32.h"
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 WindowClass::WindowClass() : HandleInstance(GetModuleHandle(nullptr))
 {
@@ -77,11 +80,13 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 	 * Show Window
 	 */
 	ShowWindow(Handle, SW_SHOW);
+	ImGui_ImplWin32_Init(Handle);
 	MyGraphics = std::make_unique<Graphics>(Handle);
 }
 
 Window::~Window()
 {
+	ImGui_ImplWin32_Shutdown();
 	DestroyWindow(Handle);
 }
 
@@ -135,6 +140,13 @@ LRESULT WINAPI Window::HandleMessageThunk(HWND hWnd, UINT msg, WPARAM wParam, LP
 
 LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+	{
+		return true;
+	}
+
+	const auto& ImGuiIO = ImGui::GetIO();
+
 	switch (msg)
 	{
 	case WM_CLOSE:
@@ -153,6 +165,8 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-syskeydown
 	case WM_SYSKEYDOWN:
 		{
+			if (ImGuiIO.WantCaptureKeyboard) { break; }
+
 			// AutoRepeat가 활성화 되지 않았으면 꾹 누르고 있을 때 보내지는 메시지(30번 째 비트가 1)는 처리하지 않는다.
 			if (!MyKeyboard.IsAutoRepeatEnabled() && lParam & 0x40000000) { break; }
 			MyKeyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
@@ -163,17 +177,20 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-syskeyup
 	case WM_SYSKEYUP:
 		{
+			if (ImGuiIO.WantCaptureKeyboard) { break; }
 			MyKeyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
 		}
 		break;
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-char
 	case WM_CHAR:
 		{
+			if (ImGuiIO.WantCaptureKeyboard) { break; }
 			MyKeyboard.OnChar(static_cast<unsigned char>(wParam));
 		}
 		break;
 	case WM_MOUSEMOVE:
 		{
+			if (ImGuiIO.WantCaptureMouse) { break; }
 			if (const auto [X, Y] = MAKEPOINTS(lParam); X >= 0 && X < Width && Y >= 0 && Y < Height)
 			{
 				MyMouse.OnMouseMove(X, Y);
@@ -201,30 +218,48 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_LBUTTONDOWN:
 		{
+			SetForegroundWindow(hWnd);
+			if (ImGuiIO.WantCaptureMouse) { break; }
 			const auto [X, Y] = MAKEPOINTS(lParam);
 			MyMouse.OnLeftPressed(X, Y);
 		}
 		break;
 	case WM_RBUTTONDOWN:
 		{
+			if (ImGuiIO.WantCaptureMouse) { break; }
 			const auto [X, Y] = MAKEPOINTS(lParam);
 			MyMouse.OnRightPressed(X, Y);
 		}
 		break;
 	case WM_LBUTTONUP:
 		{
+			if (ImGuiIO.WantCaptureMouse) { break; }
 			const auto [X, Y] = MAKEPOINTS(lParam);
 			MyMouse.OnLeftReleased(X, Y);
+
+			if (X < 0 || X >= Width || Y < 0 || Y >= Height)
+			{
+				ReleaseCapture();
+				MyMouse.OnMouseLeave();
+			}
 		}
 		break;
 	case WM_RBUTTONUP:
 		{
+			if (ImGuiIO.WantCaptureMouse) { break; }
 			const auto [X, Y] = MAKEPOINTS(lParam);
 			MyMouse.OnRightReleased(X, Y);
+
+			if (X < 0 || X >= Width || Y < 0 || Y >= Height)
+			{
+				ReleaseCapture();
+				MyMouse.OnMouseLeave();
+			}
 		}
 		break;
 	case WM_MOUSEWHEEL:
 		{
+			if (ImGuiIO.WantCaptureMouse) { break; }
 			const auto [X, Y] = MAKEPOINTS(lParam);
 			MyMouse.OnWheelDelta(X, Y, GET_WHEEL_DELTA_WPARAM(wParam));
 		}

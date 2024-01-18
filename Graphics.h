@@ -14,11 +14,26 @@ public:
 	Graphics(Graphics&&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
 	Graphics& operator=(Graphics&&) = delete;
-	~Graphics() = default;
+	~Graphics();
 
 	void EndFrame();
-	void ClearBuffer(float InRed, float InGreen, float InBlue) const noexcept;
+	void BeginFrame(float InRed, float InGreen, float InBlue) const noexcept;
 	void DrawIndexed(UINT InCount) const;
+
+	void EnableImGui() noexcept
+	{
+		bIsImGuiEnabled = true;
+	}
+
+	void DisableImGui() noexcept
+	{
+		bIsImGuiEnabled = false;
+	}
+
+	[[nodiscard]] bool IsImGuiEnabled() const noexcept
+	{
+		return bIsImGuiEnabled;
+	}
 
 	void SetProjection(DirectX::FXMMATRIX& InProjection)
 	{
@@ -38,4 +53,5 @@ private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> RenderTargetView;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DepthStencilView;
+	bool bIsImGuiEnabled {true};
 };

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Drawable.h"
 #include "EngineTimer.h"
+#include "ImguiManager.h"
 #include "Window.h"
 
 class App
@@ -13,8 +14,11 @@ private:
 	void DoFrame();
 
 private:
+	static inline ImGuiManager ImGui;
+	static constexpr size_t DrawablesNum {180};
+
 	Window MyWindow;
 	EngineTimer MyTimer;
 	std::vector<std::unique_ptr<Drawable>> Drawables;
-	static constexpr size_t DrawablesNum = 180;
+	float SpeedFactor {1.0f};
 };

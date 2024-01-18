@@ -1,6 +1,8 @@
 ﻿#include "Graphics.h"
 #include <d3dcompiler.h>
 #include "ExceptionMacros.h"
+#include "imgui/imgui_impl_dx11.h"
+#include "imgui/imgui_impl_win32.h"
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "D3DCompiler.lib")
 
@@ -101,10 +103,23 @@ Graphics::Graphics(HWND InWindowHandle)
 	Viewport.TopLeftX = 0.0f;
 	Viewport.TopLeftY = 0.0f;
 	DeviceContext->RSSetViewports(1u, &Viewport);
+
+	ImGui_ImplDX11_Init(Device.Get(), DeviceContext.Get());
+}
+
+Graphics::~Graphics()
+{
+	ImGui_ImplDX11_Shutdown();
 }
 
 void Graphics::EndFrame()
 {
+	if (bIsImGuiEnabled)
+	{
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	}
+
 	if (const HRESULT ResultHandle = SwapChain->Present(1u, 0u); FAILED(ResultHandle))
 	{
 		
@@ -119,8 +134,15 @@ void Graphics::EndFrame()
 	}
 }
 
-void Graphics::ClearBuffer(const float InRed, const float InGreen, const float InBlue) const noexcept
+void Graphics::BeginFrame(float InRed, float InGreen, float InBlue) const noexcept
 {
+	if (bIsImGuiEnabled)
+	{
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+	}
+
 	const float Color[] = {InRed, InGreen, InBlue, 1.0f};
 	DeviceContext->ClearRenderTargetView(RenderTargetView.Get(), Color);
 	DeviceContext->ClearDepthStencilView(DepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u);
