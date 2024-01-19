@@ -86,6 +86,7 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Ball.cpp" />
     <ClCompile Include="Box.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="DXGIInfoManager.cpp" />
     <ClCompile Include="EngineTimer.cpp" />
@@ -120,6 +121,7 @@
     <ClInclude Include="Bindable.h" />
     <ClInclude Include="Bindables.h" />
     <ClInclude Include="Box.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="ConstantBuffers.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="Drawable.h" />

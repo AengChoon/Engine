@@ -15,7 +15,7 @@ void TransformConstantBuffer::Bind(const Graphics& InGraphics) noexcept
 	MyVertexConstantBuffer->Update
 	(
 		InGraphics,
-		DirectX::XMMatrixTranspose(Parent.GetTransformMatrix() * InGraphics.GetProjection())
+		DirectX::XMMatrixTranspose(Parent.GetTransformMatrix() * InGraphics.GetCameraMatrix() * InGraphics.GetProjectionMatrix())
 	);
 
 	MyVertexConstantBuffer->Bind(InGraphics);

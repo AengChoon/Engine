@@ -3,6 +3,7 @@
 #include "EngineTimer.h"
 #include "ImguiManager.h"
 #include "Window.h"
+#include "Camera.h"
 
 class App
 {
@@ -19,6 +20,7 @@ private:
 
 	Window MyWindow;
 	EngineTimer MyTimer;
+	Camera MyCamera;
 	std::vector<std::unique_ptr<Drawable>> Drawables;
 	float SpeedFactor {1.0f};
 };

@@ -35,19 +35,30 @@ public:
 		return bIsImGuiEnabled;
 	}
 
-	void SetProjection(DirectX::FXMMATRIX& InProjection)
+	void SetProjectionMatrix(const DirectX::FXMMATRIX& InProjectionMatrix)
 	{
-		Projection = InProjection;
+		ProjectionMatrix = InProjectionMatrix;
 	}
 
-	[[nodiscard]] DirectX::XMMATRIX GetProjection() const
+	[[nodiscard]] DirectX::XMMATRIX GetProjectionMatrix() const
 	{
-		return Projection;
+		return ProjectionMatrix;
+	}
+
+	void SetCameraMatrix(const DirectX::FXMMATRIX& InCameraMatrix)
+	{
+		CameraMatrix = InCameraMatrix;
+	}
+
+	[[nodiscard]] DirectX::XMMATRIX GetCameraMatrix() const
+	{
+		return CameraMatrix;
 	}
 
 private:
 	DXGIInfoManager InfoManager;
-	DirectX::XMMATRIX Projection;
+	DirectX::XMMATRIX ProjectionMatrix;
+	DirectX::XMMATRIX CameraMatrix;
 	Microsoft::WRL::ComPtr<ID3D11Device> Device;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> DeviceContext;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain;

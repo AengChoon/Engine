@@ -50,7 +50,7 @@ App::App()
 	const Factory MyFactory {MyWindow.GetGraphics()};
 	Drawables.reserve(DrawablesNum);
 	std::generate_n(std::back_inserter(Drawables), DrawablesNum, MyFactory);
-	MyWindow.GetGraphics().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
+	MyWindow.GetGraphics().SetProjectionMatrix(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 }
 
 int App::Run()
@@ -71,10 +71,11 @@ void App::DoFrame()
 	auto DeltaTime = MyTimer.Mark() * SpeedFactor;
 
 	MyWindow.GetGraphics().BeginFrame(0.07f, 0.0f, 0.12f);
+	MyWindow.GetGraphics().SetCameraMatrix(MyCamera.GetMatrix());
 
 	for (const auto& Drawable : Drawables)
 	{
-		Drawable->Update(DeltaTime);
+		Drawable->Update(MyWindow.MyKeyboard.IsKeyPressed(VK_SPACE) ? 0.0f : DeltaTime);
 		Drawable->Draw(MyWindow.GetGraphics());
 	}
 
@@ -82,8 +83,11 @@ void App::DoFrame()
 	{
 		ImGui::SliderFloat("Speed", &SpeedFactor, 0.0f, 4.0f);
 		ImGui::Text("%d FPS", static_cast<int>(ImGui::GetIO().Framerate));
+		ImGui::Text("Status : %s", MyWindow.MyKeyboard.IsKeyPressed(VK_SPACE) ? "PAUSED" : "RUNNING");
 	}
+
 	ImGui::End();
 
+	MyCamera.ShowControlWindow();
 	MyWindow.GetGraphics().EndFrame();
 }

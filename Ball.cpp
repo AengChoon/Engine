@@ -89,6 +89,5 @@ DirectX::XMMATRIX Ball::GetTransformMatrix() const noexcept
 {
 	return DirectX::XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll) *
 		   DirectX::XMMatrixTranslation(X, 0.0f, 0.0f) *
-		   DirectX::XMMatrixRotationRollPitchYaw(Theta, Phi, Chi) *
-		   DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f);
+		   DirectX::XMMatrixRotationRollPitchYaw(Theta, Phi, Chi);
 }
