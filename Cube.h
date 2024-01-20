@@ -92,4 +92,48 @@ public:
 					}
 				};
 	}
+
+	template<typename T>
+	static IndexedTriangleList<T> MakeIndependent()
+	{
+		constexpr float EdgeLength = 1.0f / 2.0f;
+
+		std::vector<T> Vertices {24};
+		Vertices[0].Position = {-EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[1].Position = {EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[2].Position = {-EdgeLength, EdgeLength, -EdgeLength};
+		Vertices[3].Position = {EdgeLength, EdgeLength, -EdgeLength};
+		Vertices[4].Position = {-EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[5].Position = {EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[6].Position = {-EdgeLength, EdgeLength, EdgeLength};
+		Vertices[7].Position = {EdgeLength, EdgeLength, EdgeLength};
+		Vertices[8].Position = {-EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[9].Position = {-EdgeLength, EdgeLength, -EdgeLength};
+		Vertices[10].Position = {-EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[11].Position = {-EdgeLength, EdgeLength, EdgeLength};
+		Vertices[12].Position = {EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[13].Position = {EdgeLength, EdgeLength, -EdgeLength};
+		Vertices[14].Position = {EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[15].Position = {EdgeLength, EdgeLength, EdgeLength};
+		Vertices[16].Position = {-EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[17].Position = {EdgeLength, -EdgeLength, -EdgeLength};
+		Vertices[18].Position = {-EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[19].Position = {EdgeLength, -EdgeLength, EdgeLength};
+		Vertices[20].Position = {-EdgeLength, EdgeLength, -EdgeLength};
+		Vertices[21].Position = {EdgeLength, EdgeLength, -EdgeLength};
+		Vertices[22].Position = {-EdgeLength, EdgeLength, EdgeLength};
+		Vertices[23].Position = {EdgeLength, EdgeLength, EdgeLength};
+
+		return {
+					std::move(Vertices),
+					{
+						0,2,1,    2,3,1,
+						4,5,7,    4,7,6,
+						8,10,9,   10,11,9,
+						12,13,15, 12,15,14,
+						16,17,18, 18,17,19,
+						20,23,21, 20,22,23
+					}
+				};
+	}
 };

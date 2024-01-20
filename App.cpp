@@ -11,7 +11,7 @@
 GDIPlusManager GDIPlus;
 
 App::App()
-	: MyWindow(800, 600, WindowClass::GetName())
+	: MyWindow(800, 600, WindowClass::GetName()), MyPointLight(MyWindow.GetGraphics())
 {
 	class Factory
 	{
@@ -22,16 +22,7 @@ App::App()
 
 		std::unique_ptr<Drawable> operator()()
 		{
-			switch (Type(RandomGenerator))
-			{
-			case 0:
-				return std::make_unique<Box>(MyGraphics, RandomGenerator, A, B, C, D, E);
-			case 1:
-				return std::make_unique<Ball>(MyGraphics, RandomGenerator, A, B, C, D, Longitude, Latitude);
-			case 2:
-				return std::make_unique<TexturedBox>(MyGraphics, RandomGenerator, A, B, C, D);
-			default: return {};
-			}
+			return std::make_unique<Box>(MyGraphics, RandomGenerator, A, B, C, D, E);
 		}
 
 	private:
@@ -72,12 +63,14 @@ void App::DoFrame()
 
 	MyWindow.GetGraphics().BeginFrame(0.07f, 0.0f, 0.12f);
 	MyWindow.GetGraphics().SetCameraMatrix(MyCamera.GetMatrix());
+	MyPointLight.Bind(MyWindow.GetGraphics());
 
 	for (const auto& Drawable : Drawables)
 	{
 		Drawable->Update(MyWindow.MyKeyboard.IsKeyPressed(VK_SPACE) ? 0.0f : DeltaTime);
 		Drawable->Draw(MyWindow.GetGraphics());
 	}
+	MyPointLight.Draw(MyWindow.GetGraphics());
 
 	if (ImGui::Begin("Simulation"))
 	{
@@ -89,5 +82,6 @@ void App::DoFrame()
 	ImGui::End();
 
 	MyCamera.ShowControlWindow();
+	MyPointLight.ShowControlWindow();
 	MyWindow.GetGraphics().EndFrame();
 }

@@ -6,17 +6,25 @@ TransformConstantBuffer::TransformConstantBuffer(const Graphics& InGraphics, con
 {
 	if (!MyVertexConstantBuffer)
 	{
-		MyVertexConstantBuffer = std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(InGraphics);
+		MyVertexConstantBuffer = std::make_unique<VertexConstantBuffer<Transforms>>(InGraphics);
 	}
 }
 
 void TransformConstantBuffer::Bind(const Graphics& InGraphics) noexcept
 {
-	MyVertexConstantBuffer->Update
-	(
-		InGraphics,
-		DirectX::XMMatrixTranspose(Parent.GetTransformMatrix() * InGraphics.GetCameraMatrix() * InGraphics.GetProjectionMatrix())
-	);
+	const auto ModelTransformMatrix = Parent.GetTransformMatrix();
 
+	const Transforms ModelTransforms
+	{
+		DirectX::XMMatrixTranspose(ModelTransformMatrix),
+		DirectX::XMMatrixTranspose
+		(
+			ModelTransformMatrix *
+			InGraphics.GetCameraMatrix() *
+			InGraphics.GetProjectionMatrix()
+		)
+	};
+
+	MyVertexConstantBuffer->Update(InGraphics, ModelTransforms);
 	MyVertexConstantBuffer->Bind(InGraphics);
 }
