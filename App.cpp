@@ -22,7 +22,8 @@ App::App()
 
 		std::unique_ptr<Drawable> operator()()
 		{
-			return std::make_unique<Box>(MyGraphics, RandomGenerator, A, B, C, D, E);
+			const DirectX::XMFLOAT3 MaterialColor = {Color(RandomGenerator), Color(RandomGenerator), Color(RandomGenerator)};
+			return std::make_unique<Box>(MyGraphics, RandomGenerator, A, B, C, D, E, MaterialColor);
 		}
 
 	private:
@@ -36,6 +37,7 @@ App::App()
 		std::uniform_int_distribution<int> Latitude {5, 20};
 		std::uniform_int_distribution<int> Longitude {10, 40};
 		std::uniform_int_distribution<int> Type {0, 2};
+		std::uniform_real_distribution<float> Color {0.0f, 1.0f};
 	};
 
 	const Factory MyFactory {MyWindow.GetGraphics()};
@@ -63,7 +65,7 @@ void App::DoFrame()
 
 	MyWindow.GetGraphics().BeginFrame(0.07f, 0.0f, 0.12f);
 	MyWindow.GetGraphics().SetCameraMatrix(MyCamera.GetMatrix());
-	MyPointLight.Bind(MyWindow.GetGraphics());
+	MyPointLight.Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
 
 	for (const auto& Drawable : Drawables)
 	{

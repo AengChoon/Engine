@@ -15,7 +15,7 @@ class TransformConstantBuffer : public Bindable
 	};
 
 public:
-	TransformConstantBuffer(const Graphics& InGraphics, const Drawable& InParent);
+	TransformConstantBuffer(const Graphics& InGraphics, const Drawable& InParent, UINT InSlot = 0u);
 
 	void Bind(const Graphics& InGraphics) noexcept override;
 

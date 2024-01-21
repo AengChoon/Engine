@@ -5,7 +5,7 @@
 Box::Box(Graphics& InGraphics, std::mt19937& InRandomGenerator, 
          std::uniform_real_distribution<float>& InA, std::uniform_real_distribution<float>& InB,
          std::uniform_real_distribution<float>& InC, std::uniform_real_distribution<float>& InD,
-		 std::uniform_real_distribution<float>& InE)
+		 std::uniform_real_distribution<float>& InE, DirectX::XMFLOAT3 InMaterialColor)
 	: X(InD(InRandomGenerator)),
 	  Theta(InA(InRandomGenerator)), Phi(InA(InRandomGenerator)), Chi(InA(InRandomGenerator)),
 	  DeltaRoll(InB(InRandomGenerator)), DeltaPitch(InB(InRandomGenerator)), DeltaYaw(InB(InRandomGenerator)),
@@ -45,6 +45,16 @@ Box::Box(Graphics& InGraphics, std::mt19937& InRandomGenerator,
 		SetIndexBufferFromStaticBindables();
 	}
 
+	struct PSMaterialConstants
+	{
+		alignas(16) DirectX::XMFLOAT3 Color;
+		float SpecularIntensity = 0.6f;
+		float SpecularPower = 30.0f;
+		float Padding[2];
+	} MaterialConstants;
+
+	MaterialConstants.Color = InMaterialColor;
+	AddInstanceBindable(std::make_unique<PixelConstantBuffer<PSMaterialConstants>>(InGraphics, MaterialConstants, 1u));
 	AddInstanceBindable(std::make_unique<TransformConstantBuffer>(InGraphics, *this));
 	DirectX::XMStoreFloat3x3(&ModelTransform, DirectX::XMMatrixScaling(1.0f, 1.0f, InE(InRandomGenerator)));
 }

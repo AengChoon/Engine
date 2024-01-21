@@ -6,7 +6,8 @@ template<typename T>
 class ConstantBuffer : public Bindable
 {
 public:
-	ConstantBuffer(const Graphics& InGraphics, const T& InConstants)
+	ConstantBuffer(const Graphics& InGraphics, const T& InConstants, const UINT InSlot = 0u)
+		: Slot(InSlot)
 	{
 		HRESULT ResultHandle;
 
@@ -22,14 +23,15 @@ public:
 		SubresourceData.pSysMem = &InConstants;
 
 		CHECK_HRESULT_EXCEPTION(GetDevice(InGraphics)->CreateBuffer
-		(
-			&ConstantBufferDescription,
-			&SubresourceData,
-			&MyConstantBuffer
-		))
+			(
+				&ConstantBufferDescription,
+				&SubresourceData,
+				&MyConstantBuffer
+			))
 	}
 
-	explicit ConstantBuffer(const Graphics& InGraphics)
+	explicit ConstantBuffer(const Graphics& InGraphics, const UINT InSlot = 0u)
+		: Slot(InSlot)
 	{
 		HRESULT ResultHandle;
 
@@ -38,15 +40,15 @@ public:
 		ConstantBufferDescription.Usage = D3D11_USAGE_DYNAMIC;
 		ConstantBufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		ConstantBufferDescription.MiscFlags = 0u;
-		ConstantBufferDescription.ByteWidth = sizeof( T );
+		ConstantBufferDescription.ByteWidth = sizeof(T);
 		ConstantBufferDescription.StructureByteStride = 0u;
 
 		CHECK_HRESULT_EXCEPTION(GetDevice(InGraphics)->CreateBuffer
-		(
-			&ConstantBufferDescription,
-			nullptr,
-			&MyConstantBuffer
-		))
+			(
+				&ConstantBufferDescription,
+				nullptr,
+				&MyConstantBuffer
+			))
 	}
 
 	void Update(const Graphics& InGraphics, const T& InConstants)
@@ -69,6 +71,7 @@ public:
 
 protected:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> MyConstantBuffer;
+	UINT Slot;
 };
 
 template<typename T>
@@ -81,7 +84,7 @@ public:
 	{
 		ConstantBuffer<T>::GetContext(InGraphics)->VSSetConstantBuffers
 		(
-			0u,
+			ConstantBuffer<T>::Slot,
 			1u,
 			ConstantBuffer<T>::MyConstantBuffer.GetAddressOf()
 		);
@@ -98,7 +101,7 @@ public:
 	{
 		ConstantBuffer<T>::GetContext(InGraphics)->PSSetConstantBuffers
 		(
-			0u,
+			ConstantBuffer<T>::Slot,
 			1u,
 			ConstantBuffer<T>::MyConstantBuffer.GetAddressOf()
 		);

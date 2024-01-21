@@ -10,17 +10,22 @@ public:
 	void ShowControlWindow() noexcept;
 	void Reset() noexcept;
 	void Draw(const Graphics& InGraphics) const;
-	void Bind(const Graphics& InGraphics) const noexcept;
+	void Bind(const Graphics& InGraphics, const DirectX::FXMMATRIX& InViewMatrix) const noexcept;
 
 private:
 	struct PointLightConstantBuffer
 	{
-		DirectX::XMFLOAT3 Position;
-		float Padding;
+		alignas(16) DirectX::XMFLOAT3 Position;
+		alignas(16) DirectX::XMFLOAT3 AmbientColor;
+		alignas(16) DirectX::XMFLOAT3 DiffuseColor;
+		float DiffuseStrength;
+		float QuadraticAttenuation;
+		float LinearAttenuation;
+		float ConstantAttenuation;
 	};
 
 private:
-	DirectX::XMFLOAT3 Position = { 0.0f,0.0f,0.0f };;
+	PointLightConstantBuffer ConstantBufferData;
 	mutable SolidSphere Mesh;
 	mutable PixelConstantBuffer<PointLightConstantBuffer> ConstantBuffer;
 };
