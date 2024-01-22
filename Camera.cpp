@@ -3,6 +3,11 @@
 
 DirectX::XMMATRIX Camera::GetMatrix() const noexcept
 {
+	const auto WorldTranslation = DirectX::XMMatrixTranslation(0.0f, 0.0f, -Z);
+	const auto WorldRotation = DirectX::XMMatrixRotationRollPitchYaw(Phi, -Theta, 0.0f);
+	const auto WorldTransform =  WorldTranslation * WorldRotation;
+	const auto LocalTransform = DirectX::XMMatrixInverse(nullptr, WorldTransform);
+
 	const auto Position
 	{
 	 	DirectX::XMVector3Transform

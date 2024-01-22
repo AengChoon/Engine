@@ -59,10 +59,6 @@ void PointLight::Draw(const Graphics& InGraphics) const
 
 void PointLight::Bind(const Graphics& InGraphics, const DirectX::FXMMATRIX& InViewMatrix) const noexcept
 {	
-	auto DataCopy = ConstantBufferData;
-	const auto WorldPosition = DirectX::XMLoadFloat3(&ConstantBufferData.Position);
-	DirectX::XMStoreFloat3(&DataCopy.Position,DirectX::XMVector3Transform(WorldPosition, InViewMatrix));
-
-	ConstantBuffer.Update(InGraphics, DataCopy);
+	ConstantBuffer.Update(InGraphics, ConstantBufferData);
 	ConstantBuffer.Bind(InGraphics);
 }

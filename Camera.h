@@ -6,6 +6,10 @@ class Camera
 public:
 	[[nodiscard]] DirectX::XMMATRIX GetMatrix() const noexcept;
 	void ShowControlWindow() noexcept;
+	DirectX::XMFLOAT3 GetPosition() const
+	{
+		return {0.0f, 0.0f, -Z};
+	}
 	void Reset() noexcept;
 
 private:

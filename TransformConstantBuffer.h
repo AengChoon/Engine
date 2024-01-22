@@ -10,8 +10,8 @@ class TransformConstantBuffer : public Bindable
 {
 	struct Transforms
 	{
-		DirectX::XMMATRIX Model;
-		DirectX::XMMATRIX ModelViewProjection;
+		DirectX::XMMATRIX World;
+		DirectX::XMMATRIX WorldViewProjection;
 	};
 
 public:
@@ -21,5 +21,5 @@ public:
 
 private:
 	static inline std::unique_ptr<VertexConstantBuffer<Transforms>> MyVertexConstantBuffer;
-	const Drawable& Parent;
+	std::reference_wrapper<const Drawable> Parent;
 };

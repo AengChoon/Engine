@@ -1,5 +1,6 @@
 ﻿#include "Box.h"
 #include "Bindables.h"
+#include "Camera.h"
 #include "Cube.h"
 
 Box::Box(Graphics& InGraphics, std::mt19937& InRandomGenerator, 
@@ -55,6 +56,15 @@ Box::Box(Graphics& InGraphics, std::mt19937& InRandomGenerator,
 
 	MaterialConstants.Color = InMaterialColor;
 	AddInstanceBindable(std::make_unique<PixelConstantBuffer<PSMaterialConstants>>(InGraphics, MaterialConstants, 1u));
+
+	struct PSCameraConstants
+	{
+		alignas(16) DirectX::XMFLOAT3 Position;
+	} CameraConstants;
+
+	CameraConstants.Position = InGraphics.GetCamera().GetPosition();
+	AddInstanceBindable(std::make_unique<PixelConstantBuffer<PSCameraConstants>>(InGraphics, CameraConstants, 2u));
+
 	AddInstanceBindable(std::make_unique<TransformConstantBuffer>(InGraphics, *this));
 	DirectX::XMStoreFloat3x3(&ModelTransform, DirectX::XMMatrixScaling(1.0f, 1.0f, InE(InRandomGenerator)));
 }

@@ -5,6 +5,9 @@
 #include "EngineMath.h"
 #include "GDIPlusManager.h"
 #include "TexturedBox.h"
+#include "assimp/BaseImporter.h"
+#include "assimp/Importer.hpp"
+#include "assimp/postprocess.h"
 #include "imgui/imgui_impl_dx11.h"
 #include "imgui/imgui_impl_win32.h"
 
@@ -13,6 +16,9 @@ GDIPlusManager GDIPlus;
 App::App()
 	: MyWindow(800, 600, WindowClass::GetName()), MyPointLight(MyWindow.GetGraphics())
 {
+	Assimp::Importer Importer;
+	auto Model = Importer.ReadFile("Models\\suzanne.obj", aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+	MyWindow.GetGraphics().SetCamera(MyCamera);
 	class Factory
 	{
 	public:
@@ -64,7 +70,6 @@ void App::DoFrame()
 	auto DeltaTime = MyTimer.Mark() * SpeedFactor;
 
 	MyWindow.GetGraphics().BeginFrame(0.07f, 0.0f, 0.12f);
-	MyWindow.GetGraphics().SetCameraMatrix(MyCamera.GetMatrix());
 	MyPointLight.Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
 
 	for (const auto& Drawable : Drawables)

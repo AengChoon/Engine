@@ -1,4 +1,5 @@
 ﻿#include "TransformConstantBuffer.h"
+#include "Camera.h"
 #include "Drawable.h"
 
 TransformConstantBuffer::TransformConstantBuffer(const Graphics& InGraphics, const Drawable& InParent, const UINT InSlot)
@@ -12,18 +13,19 @@ TransformConstantBuffer::TransformConstantBuffer(const Graphics& InGraphics, con
 
 void TransformConstantBuffer::Bind(const Graphics& InGraphics) noexcept
 {
-	const auto ModelViewMatrix = Parent.GetTransformMatrix() * InGraphics.GetCameraMatrix();
+	const auto WorldTransformMatrix = Parent.get().GetTransformMatrix();
 
-	const Transforms ModelTransforms
+	const Transforms CurrentTransforms
 	{
-		DirectX::XMMatrixTranspose(ModelViewMatrix),
+		DirectX::XMMatrixTranspose(WorldTransformMatrix),
 		DirectX::XMMatrixTranspose
 		(
-			ModelViewMatrix *
+			WorldTransformMatrix *
+			InGraphics.GetCamera().GetMatrix() *
 			InGraphics.GetProjectionMatrix()
 		)
 	};
 
-	MyVertexConstantBuffer->Update(InGraphics, ModelTransforms);
+	MyVertexConstantBuffer->Update(InGraphics, CurrentTransforms);
 	MyVertexConstantBuffer->Bind(InGraphics);
 }

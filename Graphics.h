@@ -4,6 +4,8 @@
 #include "wrl/client.h"
 #include "DXGIInfoManager.h"
 
+class Camera;
+
 class Graphics
 {
 	friend class Bindable;
@@ -45,20 +47,22 @@ public:
 		return ProjectionMatrix;
 	}
 
-	void SetCameraMatrix(const DirectX::FXMMATRIX& InCameraMatrix)
+	void SetCamera(const Camera& InCamera)
 	{
-		CameraMatrix = InCameraMatrix;
+		Camera = &InCamera;
 	}
 
-	[[nodiscard]] DirectX::XMMATRIX GetCameraMatrix() const
+	[[nodiscard]] const Camera& GetCamera() const
 	{
-		return CameraMatrix;
+		assert(Camera);
+		return *Camera;
 	}
 
 private:
 	DXGIInfoManager InfoManager;
 	DirectX::XMMATRIX ProjectionMatrix;
 	DirectX::XMMATRIX CameraMatrix;
+	const Camera* Camera;
 	Microsoft::WRL::ComPtr<ID3D11Device> Device;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> DeviceContext;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain;
