@@ -5,6 +5,7 @@
 #include "EngineMath.h"
 #include "GDIPlusManager.h"
 #include "TexturedBox.h"
+#include "Vertex.h"
 #include "assimp/BaseImporter.h"
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
@@ -16,6 +17,13 @@ GDIPlusManager GDIPlus;
 App::App()
 	: MyWindow(800, 600, WindowClass::GetName()), MyPointLight(MyWindow.GetGraphics())
 {
+	VertexLayout v1;
+	v1.Append<VertexLayout::ElementType::Position3D>().Append<VertexLayout::ElementType::Normal>();
+	VertexBuffer vb {std::move(v1)};
+	vb.Emplace(DirectX::XMFLOAT3{1.0f, 1.0f, 5.0f}, DirectX::XMFLOAT3{2.0f, 1.0f, 4.0f});
+	auto pos = vb[0].Attribute<VertexLayout::ElementType::Position3D>();
+
+
 	Assimp::Importer Importer;
 	auto Model = Importer.ReadFile("Models\\suzanne.obj", aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 	MyWindow.GetGraphics().SetCamera(MyCamera);

@@ -529,6 +529,9 @@
     <ClInclude Include="include\assimp\port\AndroidJNI\BundledAssetIOSystem.h">
       <Filter>Includes\Assimp</Filter>
     </ClInclude>
+    <ClInclude Include="VertexLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ColorIndexVS.hlsl">
