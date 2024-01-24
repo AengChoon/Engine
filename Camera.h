@@ -13,7 +13,7 @@ public:
 	void Reset() noexcept;
 
 private:
-	float Z {20.0f};
+	float Z {10.0f};
 	float Theta {0.0f};
 	float Phi {0.0f};
 	float Pitch {0.0f};

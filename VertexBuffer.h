@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Bindable.h"
+#include "DynamicVertex.h"
 #include "ExceptionMacros.h"
 
 class VertexBuffer : public Bindable
@@ -21,6 +22,30 @@ public:
 
 		D3D11_SUBRESOURCE_DATA SubresourceData = {};
 		SubresourceData.pSysMem = InVertices.data();
+
+		CHECK_HRESULT_EXCEPTION(GetDevice(InGraphics)->CreateBuffer
+		(
+			&VertexBufferDesc,
+			&SubresourceData,
+			&MyVertexBuffer
+		))
+	}
+
+	VertexBuffer(const Graphics& InGraphics, const DV::VertexBuffer& InDVBuffer)
+		: Stride(static_cast<UINT>(InDVBuffer.GetLayout().ByteSize()))
+	{
+		HRESULT ResultHandle;
+
+		D3D11_BUFFER_DESC VertexBufferDesc {};
+		VertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		VertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		VertexBufferDesc.CPUAccessFlags = 0u;
+		VertexBufferDesc.MiscFlags = 0u;
+		VertexBufferDesc.ByteWidth = static_cast<UINT>(InDVBuffer.Size());
+		VertexBufferDesc.StructureByteStride = Stride;
+
+		D3D11_SUBRESOURCE_DATA SubresourceData = {};
+		SubresourceData.pSysMem = InDVBuffer.GetData();
 
 		CHECK_HRESULT_EXCEPTION(GetDevice(InGraphics)->CreateBuffer
 		(

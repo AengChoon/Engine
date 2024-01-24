@@ -134,7 +134,7 @@ void Graphics::EndFrame()
 	}
 }
 
-void Graphics::BeginFrame(float InRed, float InGreen, float InBlue) const noexcept
+void Graphics::BeginFrame(const float InRed, const float InGreen, const float InBlue) const noexcept
 {
 	if (bIsImGuiEnabled)
 	{

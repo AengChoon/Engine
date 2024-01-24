@@ -3,14 +3,11 @@
 #include "Camera.h"
 #include "Cube.h"
 
-Box::Box(Graphics& InGraphics, std::mt19937& InRandomGenerator, 
-         std::uniform_real_distribution<float>& InA, std::uniform_real_distribution<float>& InB,
-         std::uniform_real_distribution<float>& InC, std::uniform_real_distribution<float>& InD,
-		 std::uniform_real_distribution<float>& InE, DirectX::XMFLOAT3 InMaterialColor)
-	: X(InD(InRandomGenerator)),
-	  Theta(InA(InRandomGenerator)), Phi(InA(InRandomGenerator)), Chi(InA(InRandomGenerator)),
-	  DeltaRoll(InB(InRandomGenerator)), DeltaPitch(InB(InRandomGenerator)), DeltaYaw(InB(InRandomGenerator)),
-	  DeltaTheta(InC(InRandomGenerator)), DeltaPhi(InC(InRandomGenerator)), DeltaChi(InC(InRandomGenerator))
+Box::Box(const Graphics& InGraphics, std::mt19937& InRandomEngine,
+		 std::uniform_real_distribution<float>& InPositionDistribution,
+		 std::uniform_real_distribution<float>& InRotationDistribution,
+		 const DirectX::XMFLOAT3 InMaterialColor)
+	: TestObject(InGraphics, InRandomEngine, InPositionDistribution, InRotationDistribution)
 {
 	if (!IsStaticInitialized())
 	{
@@ -50,7 +47,7 @@ Box::Box(Graphics& InGraphics, std::mt19937& InRandomGenerator,
 	{
 		alignas(16) DirectX::XMFLOAT3 Color;
 		float SpecularIntensity = 0.6f;
-		float SpecularPower = 30.0f;
+		float SpecularPower = 10.0f;
 		float Padding[2];
 	} MaterialConstants;
 
@@ -66,23 +63,12 @@ Box::Box(Graphics& InGraphics, std::mt19937& InRandomGenerator,
 	AddInstanceBindable(std::make_unique<PixelConstantBuffer<PSCameraConstants>>(InGraphics, CameraConstants, 2u));
 
 	AddInstanceBindable(std::make_unique<TransformConstantBuffer>(InGraphics, *this));
-	DirectX::XMStoreFloat3x3(&ModelTransform, DirectX::XMMatrixScaling(1.0f, 1.0f, InE(InRandomGenerator)));
-}
-
-void Box::Update(float InDeltaTime) noexcept
-{
-	Roll += DeltaRoll * InDeltaTime;
-	Pitch += DeltaPitch * InDeltaTime;
-	Yaw += DeltaYaw * InDeltaTime;
-	Theta += DeltaTheta * InDeltaTime;
-	Phi += DeltaPhi * InDeltaTime;
-	Chi += DeltaChi * InDeltaTime;
+	DirectX::XMStoreFloat3x3(&ModelTransform, DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f));
 }
 
 DirectX::XMMATRIX Box::GetTransformMatrix() const noexcept
 {
 	return DirectX::XMLoadFloat3x3(&ModelTransform) *
 		   DirectX::XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll) *
-		   DirectX::XMMatrixTranslation(X, 0.0f, 0.0f) *
-		   DirectX::XMMatrixRotationRollPitchYaw(Theta, Phi, Chi);
+		   DirectX::XMMatrixTranslation(X, Y, Z);
 }

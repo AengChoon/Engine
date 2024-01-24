@@ -19,7 +19,7 @@ public:
 	~Graphics();
 
 	void EndFrame();
-	void BeginFrame(float InRed, float InGreen, float InBlue) const noexcept;
+	void BeginFrame(float InRed = 0.0f, float InGreen = 0.0f, float InBlue = 0.0f) const noexcept;
 	void DrawIndexed(UINT InCount) const;
 
 	void EnableImGui() noexcept
