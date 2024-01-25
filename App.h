@@ -1,10 +1,10 @@
 ﻿#pragma once
-#include "Drawable.h"
+#include "Camera.h"
 #include "EngineTimer.h"
 #include "ImguiManager.h"
-#include "Window.h"
-#include "Camera.h"
+#include "Model.h"
 #include "PointLight.h"
+#include "Window.h"
 
 class App
 {
@@ -14,15 +14,24 @@ public:
 
 private:
 	void DoFrame();
+	void ShowModelWindow();
 
 private:
 	static inline ImGuiManager ImGui;
-	static constexpr size_t DrawablesNum {180};
 
 	Window MyWindow;
 	EngineTimer MyTimer;
 	Camera MyCamera;
 	PointLight MyPointLight;
-	std::vector<std::unique_ptr<Drawable>> Drawables;
 	float SpeedFactor {1.0f};
+	std::unique_ptr<Model> Nano;
+	struct
+	{
+		float roll = 0.0f;
+		float pitch = 0.0f;
+		float yaw = 0.0f;
+		float x = 0.0f;
+		float y = 0.0f;
+		float z = 0.0f;
+	} Position;
 };

@@ -7,7 +7,7 @@ class IndexedTriangleList
 {
 public:
 	IndexedTriangleList() = default;
-	IndexedTriangleList(std::vector<T> InVertices, std::vector<unsigned short> InIndices)
+	IndexedTriangleList(std::vector<T> InVertices, std::vector<unsigned int> InIndices)
 		: Vertices(std::move(InVertices)), Indices(std::move(InIndices))
 	{
 		assert(Vertices.size() > 2);
@@ -45,5 +45,5 @@ public:
 
 public:
 	std::vector<T> Vertices;
-	std::vector<unsigned short> Indices;
+	std::vector<unsigned int> Indices;
 };

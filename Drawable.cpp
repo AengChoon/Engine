@@ -2,6 +2,10 @@
 #include "Bindable.h"
 #include "IndexBuffer.h"
 
+void Drawable::Update(float InDeltaTime) noexcept
+{
+}
+
 void Drawable::Draw(const Graphics& InGraphics) const
 {
 	for (const auto& Bindable : Bindables)

@@ -4,14 +4,14 @@
 class IndexBuffer : public Bindable
 {
 public:
-	IndexBuffer(const Graphics& InGraphics, const std::vector<unsigned short>& InIndices);
+	IndexBuffer(const Graphics& InGraphics, const std::vector<unsigned int>& InIndices);
 
 	void Bind(const Graphics& InGraphics) noexcept override
 	{
 		GetContext(InGraphics)->IASetIndexBuffer
 		(
 			MyIndexBuffer.Get(),
-			DXGI_FORMAT_R16_UINT,
+			DXGI_FORMAT_R32_UINT,
 			0u
 		);
 	}

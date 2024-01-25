@@ -20,7 +20,7 @@ public:
 	Drawable& operator=(Drawable&&) = delete;
 	virtual ~Drawable() = default;
 
-	virtual void Update(float InDeltaTime) noexcept = 0;
+	virtual void Update(float InDeltaTime) noexcept;
 	[[nodiscard]] virtual DirectX::XMMATRIX GetTransformMatrix() const noexcept = 0;
 
 	void Draw(const Graphics& InGraphics) const;

@@ -1,7 +1,7 @@
 ﻿#include "IndexBuffer.h"
 #include "ExceptionMacros.h"
 
-IndexBuffer::IndexBuffer(const Graphics& InGraphics, const std::vector<unsigned short>& InIndices)
+IndexBuffer::IndexBuffer(const Graphics& InGraphics, const std::vector<unsigned int>& InIndices)
 	: Count(static_cast<UINT>(InIndices.size()))
 {
 	HRESULT ResultHandle;
@@ -11,8 +11,8 @@ IndexBuffer::IndexBuffer(const Graphics& InGraphics, const std::vector<unsigned 
 	IndexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	IndexBufferDesc.CPUAccessFlags = 0u;
 	IndexBufferDesc.MiscFlags = 0u;
-	IndexBufferDesc.ByteWidth = static_cast<UINT>(Count * sizeof(unsigned short));
-	IndexBufferDesc.StructureByteStride = sizeof(unsigned short);
+	IndexBufferDesc.ByteWidth = static_cast<UINT>(Count * sizeof(unsigned int));
+	IndexBufferDesc.StructureByteStride = sizeof(unsigned int);
 
 	D3D11_SUBRESOURCE_DATA SubresourceData {};
 	SubresourceData.pSysMem = InIndices.data();

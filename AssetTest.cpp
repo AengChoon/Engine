@@ -37,7 +37,7 @@ AssetTest::AssetTest(const Graphics& InGraphics, std::mt19937& InRandomEngine,
 			);
 		}
 
-		std::vector<unsigned short> Indices;
+		std::vector<unsigned int> Indices;
 		Indices.reserve(Mesh->mNumFaces * 3);
 		for (unsigned int i = 0; i < Mesh->mNumFaces; i++)
 		{

@@ -49,7 +49,7 @@ public:
 			return InLatitudeIndex * InLongitudeDiv + InLongitudeIndex;
 		};
 
-		std::vector<unsigned short> Indices;
+		std::vector<unsigned int> Indices;
 		for (unsigned short LatitudeIndex = 0; LatitudeIndex < InLatitudeDiv - 2; ++LatitudeIndex)
 		{
 			for (unsigned short LongitudeIndex = 0; LongitudeIndex < InLongitudeDiv - 1; ++LongitudeIndex)
