@@ -1,6 +1,5 @@
 ﻿#include "App.h"
 #include "GDIPlusManager.h"
-#include "imgui/imgui.h"
 
 GDIPlusManager GDIPlus;
 
@@ -35,32 +34,11 @@ void App::DoFrame()
 
 	MyPointLight.Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
 
-	const auto ModelTransform = DirectX::XMMatrixRotationRollPitchYaw(Position.roll,Position.pitch,Position.yaw) *
-										DirectX::XMMatrixTranslation(Position.x,Position.y,Position.z);
-	Nano->Draw(MyWindow.GetGraphics(), ModelTransform);
+	Nano->Draw(MyWindow.GetGraphics());
 
 	MyPointLight.Draw(MyWindow.GetGraphics());
 	MyCamera.ShowControlWindow();
 	MyPointLight.ShowControlWindow();
-	ShowModelWindow();
+	Nano->ShowWindow();
 	MyWindow.GetGraphics().EndFrame();
-}
-
-void App::ShowModelWindow()
-{
-	if( ImGui::Begin( "Model" ) )
-	{
-		using namespace std::string_literals;
-
-		ImGui::Text( "Orientation" );
-		ImGui::SliderAngle( "Roll",&Position.roll,-180.0f,180.0f );
-		ImGui::SliderAngle( "Pitch",&Position.pitch,-180.0f,180.0f );
-		ImGui::SliderAngle( "Yaw",&Position.yaw,-180.0f,180.0f );
-
-		ImGui::Text( "Position" );
-		ImGui::SliderFloat( "X",&Position.x,-20.0f,20.0f );
-		ImGui::SliderFloat( "Y",&Position.y,-20.0f,20.0f );
-		ImGui::SliderFloat( "Z",&Position.z,-20.0f,20.0f );
-	}
-	ImGui::End();
 }

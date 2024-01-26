@@ -4,6 +4,7 @@
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
 #include "assimp/scene.h"
+#include "imgui/imgui.h"
 
 Mesh::Mesh(const Graphics& InGraphics, std::vector<std::unique_ptr<Bindable>>&& InBindables)
 {
@@ -39,8 +40,8 @@ DirectX::XMMATRIX Mesh::GetTransformMatrix() const noexcept
 	return DirectX::XMLoadFloat4x4(&TransformMatrix);
 }
 
-Node::Node(std::vector<Mesh*>&& InMeshes, const DirectX::XMMATRIX& InTransformMatrix)
-	: Meshes(std::move(InMeshes))
+Node::Node(std::string_view InName, std::vector<Mesh*>&& InMeshes, const DirectX::XMMATRIX& InTransformMatrix)
+	: Name(InName), Meshes(std::move(InMeshes))
 {
 	DirectX::XMStoreFloat4x4(&TransformMatrix, InTransformMatrix);
 }
@@ -60,12 +61,87 @@ void Node::Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulat
 	}
 }
 
+void Node::RenderTree(int* const InCurrentNodeIndexAddress, int* const InSelectedNodeIndexAddress) const
+{
+	const int CurrentNodeIndex = *InCurrentNodeIndexAddress;
+	++(*InCurrentNodeIndexAddress);
+
+	const int IsCurrentNodeSelected = *InSelectedNodeIndexAddress != -1 &&
+									   CurrentNodeIndex == *InSelectedNodeIndexAddress;
+	const int IsCurrentNodeLeaf = Children.empty();
+
+	const auto NodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
+							   IsCurrentNodeSelected ? ImGuiTreeNodeFlags_Selected : 0 |
+							   IsCurrentNodeLeaf ? ImGuiTreeNodeFlags_Leaf : 0;
+
+	if (ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(CurrentNodeIndex)), NodeFlags, Name.c_str()))
+	{
+		*InSelectedNodeIndexAddress = ImGui::IsItemClicked() ? CurrentNodeIndex : *InSelectedNodeIndexAddress;
+
+		for (const auto& Child : Children)
+		{
+			Child->RenderTree(InCurrentNodeIndexAddress, InSelectedNodeIndexAddress);
+		}
+
+		ImGui::TreePop();
+	}
+
+}
+
 void Node::AddChild(std::unique_ptr<Node>&& InNode)
 {
 	Children.push_back(std::move(InNode));
 }
 
+class ModelWindow
+{
+public:
+	void Show(const std::string_view InWindowName, const Node& InRoot) noexcept
+	{
+		const auto WindowName = !InWindowName.empty() ? InWindowName : "Model";
+		int NodeIndexTracker = 0;
+
+		if (ImGui::Begin(WindowName.data()))
+		{
+			ImGui::Columns(2, nullptr, true);
+
+			InRoot.RenderTree(&NodeIndexTracker, &SelectedNodeIndex);
+
+			ImGui::NextColumn();
+			ImGui::Text("Orientation");
+			ImGui::SliderAngle("Roll", &Position.Roll, -180.0f, 180.0f);
+			ImGui::SliderAngle("Pitch", &Position.Pitch, -180.0f, 180.0f);
+			ImGui::SliderAngle("Yaw", &Position.Yaw, -180.0f, 180.0f);
+			ImGui::Text("Position");
+			ImGui::SliderFloat("X", &Position.X, -20.0f, 20.0f);
+			ImGui::SliderFloat("Y", &Position.Y, -20.0f, 20.0f);
+			ImGui::SliderFloat("Z", &Position.Z, -20.0f, 20.0f);
+		}
+
+		ImGui::End();
+	}
+
+	[[nodiscard]] DirectX::XMMATRIX GetTransformMatrix() const noexcept
+	{
+		return DirectX::XMMatrixRotationRollPitchYaw(Position.Roll,Position.Pitch,Position.Yaw) *
+			   DirectX::XMMatrixTranslation(Position.X,Position.Y,Position.Z);
+	}
+
+private:
+	struct
+	{
+		float Roll = 0.0f;
+		float Pitch = 0.0f;
+		float Yaw = 0.0f;
+		float X = 0.0f;
+		float Y = 0.0f;
+		float Z = 0.0f;
+	} Position;
+	int SelectedNodeIndex {-1};
+};
+
 Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
+	: Window(std::make_unique<ModelWindow>())
 {
 	Assimp::Importer Importer;
 	const auto* Scene = Importer.ReadFile(InFileName.data(), aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
@@ -77,6 +153,8 @@ Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
 
 	Root = ParseNode(*Scene->mRootNode);
 }
+
+Model::~Model() = default;
 
 std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh)
 {
@@ -149,17 +227,22 @@ std::unique_ptr<Node> Model::ParseNode(const aiNode& InNode)
 		NodeMeshes.push_back(Meshes.at(ModelMeshIndex).get());
 	}
 
-	auto pNode = std::make_unique<Node>(std::move(NodeMeshes), NodeTransformMatrix);
+	auto NewNode = std::make_unique<Node>(InNode.mName.C_Str(), std::move(NodeMeshes), NodeTransformMatrix);
 
 	for (size_t ChildrenIndex = 0; ChildrenIndex < InNode.mNumChildren; ++ChildrenIndex)
 	{
-		pNode->AddChild(ParseNode(*InNode.mChildren[ChildrenIndex]));
+		NewNode->AddChild(ParseNode(*InNode.mChildren[ChildrenIndex]));
 	}
 
-	return pNode;
+	return NewNode;
 }
 
-void Model::Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InTransform)
+void Model::Draw(const Graphics& InGraphics) const
 {
-	Root->Draw(InGraphics, InTransform);
+	Root->Draw(InGraphics, Window->GetTransformMatrix());
+}
+
+void Model::ShowWindow(const std::string_view InWindowName) const
+{
+	Window->Show(InWindowName, *Root);
 }
