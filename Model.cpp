@@ -1,4 +1,7 @@
 ﻿#include "Model.h"
+
+#include <unordered_map>
+
 #include "Bindables.h"
 #include "Camera.h"
 #include "assimp/Importer.hpp"
@@ -43,12 +46,15 @@ DirectX::XMMATRIX Mesh::GetTransformMatrix() const noexcept
 Node::Node(std::string_view InName, std::vector<Mesh*>&& InMeshes, const DirectX::XMMATRIX& InTransformMatrix)
 	: Name(InName), Meshes(std::move(InMeshes))
 {
-	DirectX::XMStoreFloat4x4(&TransformMatrix, InTransformMatrix);
+	DirectX::XMStoreFloat4x4(&BaseTransform, InTransformMatrix);
+	DirectX::XMStoreFloat4x4(&AppliedTransform, DirectX::XMMatrixIdentity());
 }
 
 void Node::Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulatedTransformMatrix) const
 {
-	const auto MyTransformMatrix = DirectX::XMLoadFloat4x4(&TransformMatrix) * InAccumulatedTransformMatrix;
+	const auto MyTransformMatrix = DirectX::XMLoadFloat4x4(&BaseTransform) *
+										   XMLoadFloat4x4(&AppliedTransform)*
+										   InAccumulatedTransformMatrix;
 
 	for (const auto* Mesh : Meshes)
 	{
@@ -61,7 +67,17 @@ void Node::Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulat
 	}
 }
 
-void Node::RenderTree(int* const InCurrentNodeIndexAddress, int* const InSelectedNodeIndexAddress) const
+void Node::SetAppliedTransform(DirectX::FXMMATRIX InTransform)
+{
+	DirectX::XMStoreFloat4x4(&AppliedTransform, InTransform);
+}
+
+void Node::AddChild(std::unique_ptr<Node>&& InNode)
+{
+	Children.push_back(std::move(InNode));
+}
+
+void Node::RenderTree(int* const InCurrentNodeIndexAddress, int* const InSelectedNodeIndexAddress, const Node** InSelectedNode) const
 {
 	const int CurrentNodeIndex = *InCurrentNodeIndexAddress;
 	++(*InCurrentNodeIndexAddress);
@@ -74,23 +90,23 @@ void Node::RenderTree(int* const InCurrentNodeIndexAddress, int* const InSelecte
 							   IsCurrentNodeSelected ? ImGuiTreeNodeFlags_Selected : 0 |
 							   IsCurrentNodeLeaf ? ImGuiTreeNodeFlags_Leaf : 0;
 
-	if (ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(CurrentNodeIndex)), NodeFlags, Name.c_str()))
-	{
-		*InSelectedNodeIndexAddress = ImGui::IsItemClicked() ? CurrentNodeIndex : *InSelectedNodeIndexAddress;
+	const auto IsExpanded = ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(CurrentNodeIndex)), NodeFlags, Name.c_str());
 
+	if (ImGui::IsItemClicked())
+	{
+		*InSelectedNodeIndexAddress = CurrentNodeIndex;
+		*InSelectedNode = this;
+	}
+
+	if (IsExpanded)
+	{
 		for (const auto& Child : Children)
 		{
-			Child->RenderTree(InCurrentNodeIndexAddress, InSelectedNodeIndexAddress);
+			Child->RenderTree(InCurrentNodeIndexAddress, InSelectedNodeIndexAddress, InSelectedNode);
 		}
 
 		ImGui::TreePop();
 	}
-
-}
-
-void Node::AddChild(std::unique_ptr<Node>&& InNode)
-{
-	Children.push_back(std::move(InNode));
 }
 
 class ModelWindow
@@ -104,18 +120,21 @@ public:
 		if (ImGui::Begin(WindowName.data()))
 		{
 			ImGui::Columns(2, nullptr, true);
-
-			InRoot.RenderTree(&NodeIndexTracker, &SelectedNodeIndex);
+			InRoot.RenderTree(&NodeIndexTracker, &SelectedNodeIndex, const_cast<const Node**>(&SelectedNode));
 
 			ImGui::NextColumn();
-			ImGui::Text("Orientation");
-			ImGui::SliderAngle("Roll", &Position.Roll, -180.0f, 180.0f);
-			ImGui::SliderAngle("Pitch", &Position.Pitch, -180.0f, 180.0f);
-			ImGui::SliderAngle("Yaw", &Position.Yaw, -180.0f, 180.0f);
-			ImGui::Text("Position");
-			ImGui::SliderFloat("X", &Position.X, -20.0f, 20.0f);
-			ImGui::SliderFloat("Y", &Position.Y, -20.0f, 20.0f);
-			ImGui::SliderFloat("Z", &Position.Z, -20.0f, 20.0f);
+			if (SelectedNode)
+			{
+				auto& [Roll, Pitch, Yaw, X, Y, Z] = NodeTransforms[SelectedNodeIndex];
+				ImGui::Text("Orientation");
+				ImGui::SliderAngle("Roll", &Roll, -180.0f, 180.0f);
+				ImGui::SliderAngle("Pitch", &Pitch, -180.0f, 180.0f);
+				ImGui::SliderAngle("Yaw", &Yaw, -180.0f, 180.0f);
+				ImGui::Text("Position");
+				ImGui::SliderFloat("X", &X, -20.0f, 20.0f);
+				ImGui::SliderFloat("Y", &Y, -20.0f, 20.0f);
+				ImGui::SliderFloat("Z", &Z, -20.0f, 20.0f);
+			}
 		}
 
 		ImGui::End();
@@ -123,12 +142,18 @@ public:
 
 	[[nodiscard]] DirectX::XMMATRIX GetTransformMatrix() const noexcept
 	{
-		return DirectX::XMMatrixRotationRollPitchYaw(Position.Roll,Position.Pitch,Position.Yaw) *
-			   DirectX::XMMatrixTranslation(Position.X,Position.Y,Position.Z);
+		const auto& [Roll, Pitch, Yaw, X, Y, Z] = NodeTransforms.at(SelectedNodeIndex);
+		return DirectX::XMMatrixRotationRollPitchYaw(Roll, Pitch, Yaw) *
+			   DirectX::XMMatrixTranslation(X, Y, Z);
+	}
+
+	[[nodiscard]] Node* GetSelectedNode() const
+	{
+		return SelectedNode;
 	}
 
 private:
-	struct
+	struct TransformParameters
 	{
 		float Roll = 0.0f;
 		float Pitch = 0.0f;
@@ -136,8 +161,11 @@ private:
 		float X = 0.0f;
 		float Y = 0.0f;
 		float Z = 0.0f;
-	} Position;
+	};
+
 	int SelectedNodeIndex {-1};
+	Node* SelectedNode {nullptr};
+	std::unordered_map<int, TransformParameters> NodeTransforms;
 };
 
 Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
@@ -239,7 +267,12 @@ std::unique_ptr<Node> Model::ParseNode(const aiNode& InNode)
 
 void Model::Draw(const Graphics& InGraphics) const
 {
-	Root->Draw(InGraphics, Window->GetTransformMatrix());
+	if (auto* const SelectedNode = Window->GetSelectedNode())
+	{
+		SelectedNode->SetAppliedTransform(Window->GetTransformMatrix());
+	}
+
+	Root->Draw(InGraphics, DirectX::XMMatrixIdentity());
 }
 
 void Model::ShowWindow(const std::string_view InWindowName) const

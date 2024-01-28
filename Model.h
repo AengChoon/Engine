@@ -21,20 +21,23 @@ private:
 class Node
 {
 	friend class Model;
+	friend class ModelWindow;
 
 public:
 	Node(std::string_view InName, std::vector<Mesh*>&& InMeshes, const DirectX::XMMATRIX& InTransformMatrix);
 	void Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulatedTransformMatrix) const;
-	void RenderTree(int* InCurrentNodeIndexAddress, int* InSelectedNodeIndexAddress) const;
+	void SetAppliedTransform(DirectX::FXMMATRIX InTransform);
 
 private:
 	void AddChild(std::unique_ptr<Node>&& InNode);
+	void RenderTree(int* InCurrentNodeIndexAddress, int* InSelectedNodeIndexAddress, const Node** InSelectedNode) const;
 
 private:
 	std::string Name;
 	std::vector<std::unique_ptr<Node>> Children;
 	std::vector<Mesh*> Meshes;
-	DirectX::XMFLOAT4X4 TransformMatrix;
+	DirectX::XMFLOAT4X4 BaseTransform;
+	DirectX::XMFLOAT4X4 AppliedTransform;
 };
 
 class Model
