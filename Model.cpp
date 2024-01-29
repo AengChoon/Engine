@@ -8,6 +8,7 @@
 #include "assimp/postprocess.h"
 #include "assimp/scene.h"
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 
 Mesh::Mesh(const Graphics& InGraphics, std::vector<std::unique_ptr<Bindable>>&& InBindables)
 {
@@ -52,8 +53,8 @@ Node::Node(std::string_view InName, std::vector<Mesh*>&& InMeshes, const DirectX
 
 void Node::Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulatedTransformMatrix) const
 {
-	const auto MyTransformMatrix = DirectX::XMLoadFloat4x4(&BaseTransform) *
-										   XMLoadFloat4x4(&AppliedTransform)*
+	const auto MyTransformMatrix = DirectX::XMLoadFloat4x4(&AppliedTransform) *
+										   DirectX::XMLoadFloat4x4(&BaseTransform)*
 										   InAccumulatedTransformMatrix;
 
 	for (const auto* Mesh : Meshes)
@@ -87,8 +88,8 @@ void Node::RenderTree(int* const InCurrentNodeIndexAddress, int* const InSelecte
 	const int IsCurrentNodeLeaf = Children.empty();
 
 	const auto NodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
-							   IsCurrentNodeSelected ? ImGuiTreeNodeFlags_Selected : 0 |
-							   IsCurrentNodeLeaf ? ImGuiTreeNodeFlags_Leaf : 0;
+							   (IsCurrentNodeSelected ? ImGuiTreeNodeFlags_Selected : 0) |
+							   (IsCurrentNodeLeaf ? ImGuiTreeNodeFlags_Leaf : 0);
 
 	const auto IsExpanded = ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(CurrentNodeIndex)), NodeFlags, Name.c_str());
 
@@ -112,6 +113,10 @@ void Node::RenderTree(int* const InCurrentNodeIndexAddress, int* const InSelecte
 class ModelWindow
 {
 public:
+	ModelWindow(const int InDefaultSelectedNodeIndex, Node* InDefaultSelectedNode)
+		: SelectedNodeIndex(InDefaultSelectedNodeIndex), SelectedNode(InDefaultSelectedNode)
+	{}
+
 	void Show(const std::string_view InWindowName, const Node& InRoot) noexcept
 	{
 		const auto WindowName = !InWindowName.empty() ? InWindowName : "Model";
@@ -123,6 +128,7 @@ public:
 			InRoot.RenderTree(&NodeIndexTracker, &SelectedNodeIndex, const_cast<const Node**>(&SelectedNode));
 
 			ImGui::NextColumn();
+
 			if (SelectedNode)
 			{
 				auto& [Roll, Pitch, Yaw, X, Y, Z] = NodeTransforms[SelectedNodeIndex];
@@ -163,13 +169,12 @@ private:
 		float Z = 0.0f;
 	};
 
-	int SelectedNodeIndex {-1};
-	Node* SelectedNode {nullptr};
+	int SelectedNodeIndex;
+	Node* SelectedNode;
 	std::unordered_map<int, TransformParameters> NodeTransforms;
 };
 
 Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
-	: Window(std::make_unique<ModelWindow>())
 {
 	Assimp::Importer Importer;
 	const auto* Scene = Importer.ReadFile(InFileName.data(), aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
@@ -180,6 +185,7 @@ Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
 	}
 
 	Root = ParseNode(*Scene->mRootNode);
+	Window = std::make_unique<ModelWindow>(0, Root.get());
 }
 
 Model::~Model() = default;

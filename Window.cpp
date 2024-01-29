@@ -81,7 +81,7 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 	 */
 	ShowWindow(Handle, SW_SHOW);
 	ImGui_ImplWin32_Init(Handle);
-	MyGraphics = std::make_unique<Graphics>(Handle);
+	MyGraphics = std::make_unique<Graphics>(Handle, InWidth, InHeight);
 }
 
 Window::~Window()

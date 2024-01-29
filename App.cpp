@@ -4,11 +4,11 @@
 GDIPlusManager GDIPlus;
 
 App::App()
-	: MyWindow(800, 600, WindowClass::GetName())
+	: MyWindow(1280, 720, WindowClass::GetName())
 	, MyPointLight(MyWindow.GetGraphics())
 {
 	MyWindow.GetGraphics().SetCamera(MyCamera);
-	MyWindow.GetGraphics().SetProjectionMatrix(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
+	MyWindow.GetGraphics().SetProjectionMatrix(DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
 }
 
 int App::Run()
@@ -30,15 +30,14 @@ void App::DoFrame()
 
 	MyWindow.GetGraphics().BeginFrame();
 
-	if (!Nano) { Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit.obj"); }
+	if (!Nano) { Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit.gltf"); }
 
 	MyPointLight.Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
-
+	Nano->ShowWindow();
 	Nano->Draw(MyWindow.GetGraphics());
 
+	MyPointLight.ShowControlWindow();
 	MyPointLight.Draw(MyWindow.GetGraphics());
 	MyCamera.ShowControlWindow();
-	MyPointLight.ShowControlWindow();
-	Nano->ShowWindow();
 	MyWindow.GetGraphics().EndFrame();
 }

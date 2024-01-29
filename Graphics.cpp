@@ -6,11 +6,11 @@
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "D3DCompiler.lib")
 
-Graphics::Graphics(HWND InWindowHandle)
+Graphics::Graphics(HWND InWindowHandle, int InWidth, int InHeight)
 {
 	DXGI_SWAP_CHAIN_DESC SwapChainDesc {};
-	SwapChainDesc.BufferDesc.Width = 0;
-	SwapChainDesc.BufferDesc.Height = 0;
+	SwapChainDesc.BufferDesc.Width = InWidth;
+	SwapChainDesc.BufferDesc.Height = InHeight;
 	SwapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	SwapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
 	SwapChainDesc.BufferDesc.RefreshRate.Denominator = 0;
@@ -76,8 +76,8 @@ Graphics::Graphics(HWND InWindowHandle)
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> DepthStencilTexture;
 	D3D11_TEXTURE2D_DESC DepthStencilTextureDesc {};
-	DepthStencilTextureDesc.Width = 800u;
-	DepthStencilTextureDesc.Height = 600u;
+	DepthStencilTextureDesc.Width = InWidth;
+	DepthStencilTextureDesc.Height = InHeight;
 	DepthStencilTextureDesc.MipLevels = 1u;
 	DepthStencilTextureDesc.ArraySize = 1u;
 	DepthStencilTextureDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -96,8 +96,8 @@ Graphics::Graphics(HWND InWindowHandle)
 	DeviceContext->OMSetRenderTargets(1u, RenderTargetView.GetAddressOf(), DepthStencilView.Get());
 
 	D3D11_VIEWPORT Viewport;
-	Viewport.Width = 800.0f;
-	Viewport.Height = 600.0f;
+	Viewport.Width = static_cast<float>(InWidth);
+	Viewport.Height = static_cast<float>(InHeight);
 	Viewport.MinDepth = 0.0f;
 	Viewport.MaxDepth = 1.0f;
 	Viewport.TopLeftX = 0.0f;
