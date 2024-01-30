@@ -7,6 +7,12 @@ class Mouse
 	friend class Window;
 
 public:
+	struct RawDelta
+	{
+		int DeltaX;
+		int DeltaY;
+	};
+
 	class Event
 	{
 	public:
@@ -84,6 +90,7 @@ public:
 	~Mouse() = default;
 
 	std::optional<Event> Read() noexcept;
+	std::optional<RawDelta> ReadRawDelta() noexcept;
 
 	void Flush() noexcept
 	{
@@ -125,8 +132,23 @@ public:
 		return Buffer.empty();
 	}
 
+	void EnableRawInput() noexcept
+	{
+		bIsRawInputEnabled = true;
+	}
+
+	void DisableRawInput() noexcept
+	{
+		bIsRawInputEnabled = false;
+	}
+
+	[[nodiscard]] bool IsRawInputEnabled() const noexcept 
+	{
+		return bIsRawInputEnabled;
+	}
+
 private:
-	void OnMouseMove(int InX, int InY) noexcept;
+	void OnMove(int InX, int InY) noexcept;
 	void OnLeftPressed(int InX, int InY) noexcept;
 	void OnLeftReleased(int InX, int InY) noexcept;
 	void OnRightPressed(int InX, int InY) noexcept;
@@ -134,9 +156,11 @@ private:
 	void OnWheelUp(int InX, int InY) noexcept;
 	void OnWheelDown(int InX, int InY) noexcept;
 	void OnWheelDelta(int InX, int InY, int InDelta);
-	void OnMouseLeave() noexcept;
-	void OnMouseEnter() noexcept;
+	void OnLeave() noexcept;
+	void OnEnter() noexcept;
+	void OnRawDelta(int InDeltaX, int InDeltaY);
 	void TrimBuffer() noexcept;
+	void TrimRawInputBuffer() noexcept;
 
 private:
 	static constexpr unsigned int BufferSize {16u};
@@ -147,6 +171,8 @@ private:
 	bool bIsLeftPressed {false};
 	bool bIsRightPressed {false};
 	bool bIsInWindow {false};
+	bool bIsRawInputEnabled {false};
 
 	std::queue<Event> Buffer;
+	std::queue<RawDelta> RawDeltaBuffer;
 };

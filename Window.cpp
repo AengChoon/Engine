@@ -52,9 +52,9 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 	: Width(InWidth), Height(InHeight)
 {
 	RECT WindowRect;
-	WindowRect.left = 100;
+	WindowRect.left = 0;
 	WindowRect.right = InWidth + WindowRect.left;
-	WindowRect.top = 100;
+	WindowRect.top = 0;
 	WindowRect.bottom = InHeight + WindowRect.top;
 
 	if (!AdjustWindowRect(&WindowRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE))
@@ -80,6 +80,18 @@ Window::Window(const int InWidth, const int InHeight, const wchar_t* InName)
 	 * Show Window
 	 */
 	ShowWindow(Handle, SW_SHOW);
+
+	RAWINPUTDEVICE RawInputDevice;
+	RawInputDevice.usUsagePage = 0x01;
+	RawInputDevice.usUsage = 0x02;
+	RawInputDevice.dwFlags = 0;
+	RawInputDevice.hwndTarget = nullptr;
+
+	if (RegisterRawInputDevices(&RawInputDevice, 1, sizeof(RawInputDevice)) == FALSE)
+	{
+		throw HRESULT_LAST_EXCEPTION();
+	}
+
 	ImGui_ImplWin32_Init(Handle);
 	MyGraphics = std::make_unique<Graphics>(Handle, InWidth, InHeight);
 }
@@ -116,6 +128,27 @@ Graphics& Window::GetGraphics() const
 	}
 
 	return *MyGraphics;
+}
+
+void Window::EnableCursor()
+{
+	bIsCursorEnabled = true;
+	ShowCursor();
+	EnableImGuiMouseInput();
+	FreeCursor();
+}
+
+void Window::DisableCursor()
+{
+	bIsCursorEnabled = false;
+	HideCursor();
+	DisableImGuiMouseInput();
+	TrapCursor();
+}
+
+bool Window::IsCursorEnabled()
+{
+	return bIsCursorEnabled;
 }
 
 LRESULT WINAPI Window::HandleMessageSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -160,6 +193,23 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			MyKeyboard.ClearState();
 		}
 		break;
+	case WM_ACTIVATE:
+		{
+			 if (!bIsCursorEnabled)
+			 {
+			 	if (wParam & WA_ACTIVE)
+			 	{
+			 		TrapCursor();
+			 		HideCursor();
+			 	}
+			 	else
+			 	{
+			 		FreeCursor();
+			 		ShowCursor();
+			 	}
+			 }
+		}
+		break;
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
 	case WM_KEYDOWN: [[fallthrough]];
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-syskeydown
@@ -190,35 +240,56 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_MOUSEMOVE:
 		{
-			if (ImGuiIO.WantCaptureMouse) { break; }
-			if (const auto [X, Y] = MAKEPOINTS(lParam); X >= 0 && X < Width && Y >= 0 && Y < Height)
+			const auto [X, Y] = MAKEPOINTS(lParam);
+
+			if (!bIsCursorEnabled)
 			{
-				MyMouse.OnMouseMove(X, Y);
+				if (!MyMouse.IsInWindow())
+				{
+					SetCapture(hWnd);
+					MyMouse.OnEnter();
+					HideCursor();
+				}
+
+				break;
+			}
+
+			if (ImGuiIO.WantCaptureMouse) { break; }
+
+			if (X >= 0 && X < Width && Y >= 0 && Y < Height)
+			{
+				MyMouse.OnMove(X, Y);
 
 				if (!MyMouse.IsInWindow())
 				{
 					SetCapture(hWnd);
-					MyMouse.OnMouseEnter();
+					MyMouse.OnEnter();
 				}
 			}
 			else
 			{
 				if (MyMouse.IsLeftPressed() || MyMouse.IsRightPressed())
 				{
-					MyMouse.OnMouseMove(X, Y);
+					MyMouse.OnMove(X, Y);
 				}
 				else
 				{
 					ReleaseCapture();
-					MyMouse.OnMouseLeave();
+					MyMouse.OnLeave();
 				}
 			}
-
 		}
 		break;
 	case WM_LBUTTONDOWN:
 		{
 			SetForegroundWindow(hWnd);
+
+			if (!bIsCursorEnabled)
+			{
+				TrapCursor();
+				HideCursor();
+			}
+
 			if (ImGuiIO.WantCaptureMouse) { break; }
 			const auto [X, Y] = MAKEPOINTS(lParam);
 			MyMouse.OnLeftPressed(X, Y);
@@ -240,7 +311,7 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (X < 0 || X >= Width || Y < 0 || Y >= Height)
 			{
 				ReleaseCapture();
-				MyMouse.OnMouseLeave();
+				MyMouse.OnLeave();
 			}
 		}
 		break;
@@ -253,7 +324,7 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (X < 0 || X >= Width || Y < 0 || Y >= Height)
 			{
 				ReleaseCapture();
-				MyMouse.OnMouseLeave();
+				MyMouse.OnLeave();
 			}
 		}
 		break;
@@ -264,7 +335,64 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			MyMouse.OnWheelDelta(X, Y, GET_WHEEL_DELTA_WPARAM(wParam));
 		}
 		break;
+	case WM_INPUT:
+		{
+			if (!MyMouse.IsRawInputEnabled()) { break; }
+
+			UINT Size;
+
+			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &Size, sizeof(RAWINPUTHEADER)) == -1)
+			{
+				break;
+			}
+
+			RawBuffer.resize(Size);
+
+			if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, RawBuffer.data(), &Size, sizeof(RAWINPUTHEADER)) != Size)
+			{
+				break;
+			}
+
+			if (const auto& [Header, Data] = reinterpret_cast<const RAWINPUT&>(*RawBuffer.data()); Header.dwType == RIM_TYPEMOUSE && (Data.mouse.lLastX != 0 || Data.mouse.lLastY != 0))
+			{
+				MyMouse.OnRawDelta(Data.mouse.lLastX, Data.mouse.lLastY);
+			}
+		}
+		break;
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+void Window::ShowCursor()
+{
+	while (::ShowCursor(TRUE) < 0);
+}
+
+void Window::HideCursor()
+{
+	while (::ShowCursor(FALSE) >= 0);
+}
+
+void Window::TrapCursor()
+{
+	RECT ClipRect;
+	GetClientRect(Handle, &ClipRect);
+	MapWindowPoints(Handle, nullptr, reinterpret_cast<LPPOINT>(&ClipRect), 2);
+	ClipCursor(&ClipRect);
+}
+
+void Window::FreeCursor()
+{
+	ClipCursor(nullptr);
+}
+
+void Window::EnableImGuiMouseInput()
+{
+	ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+}
+
+void Window::DisableImGuiMouseInput()
+{
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
 }

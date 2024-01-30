@@ -16,7 +16,7 @@ public:
 	WindowClass& operator=(WindowClass&&) = delete;
 
 	static const wchar_t* GetName();
-	HINSTANCE GetHandleInstance() const;
+	[[nodiscard]] HINSTANCE GetHandleInstance() const;
 
 private:
 	WindowClass();
@@ -40,14 +40,24 @@ public:
 	Window& operator=(Window&&) = delete;
 	~Window();
 
+	[[nodiscard]] Graphics& GetGraphics() const;
+	void EnableCursor();
+	void DisableCursor();
+	bool IsCursorEnabled();
+
 	static std::optional<int> ProcessMessages();
 
-	Graphics& GetGraphics() const;
-
 private:
+	LRESULT HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	void ShowCursor();
+	void HideCursor();
+	void TrapCursor();
+	void FreeCursor();
+	void EnableImGuiMouseInput();
+	void DisableImGuiMouseInput();
+
 	static LRESULT WINAPI HandleMessageSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static LRESULT WINAPI HandleMessageThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	LRESULT HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 public:
 	Keyboard MyKeyboard;
@@ -56,8 +66,10 @@ public:
 private:
 	static inline WindowClass WindowClassInstance;
 
+	std::unique_ptr<Graphics> MyGraphics;
+	std::vector<byte> RawBuffer;
 	HWND Handle;
 	int Width;
 	int Height;
-	std::unique_ptr<Graphics> MyGraphics;
+	bool bIsCursorEnabled {true};
 };

@@ -36,6 +36,23 @@ void App::DoFrame()
 	Nano->ShowWindow();
 	Nano->Draw(MyWindow.GetGraphics());
 
+	while (const auto Event = MyWindow.MyKeyboard.ReadKey())
+	{
+		if (Event->IsPress() && Event->GetCode() == VK_MENU)
+		{
+			if (MyWindow.IsCursorEnabled())
+			{
+				MyWindow.DisableCursor();
+				MyWindow.MyMouse.EnableRawInput();
+			}
+			else
+			{
+				MyWindow.EnableCursor();
+				MyWindow.MyMouse.DisableRawInput();
+			}
+		}
+	}
+
 	MyPointLight.ShowControlWindow();
 	MyPointLight.Draw(MyWindow.GetGraphics());
 	MyCamera.ShowControlWindow();

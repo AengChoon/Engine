@@ -15,7 +15,21 @@ std::optional<Mouse::Event> Mouse::Read() noexcept
 	}
 }
 
-void Mouse::OnMouseMove(int InX, int InY) noexcept
+std::optional<Mouse::RawDelta> Mouse::ReadRawDelta() noexcept
+{
+	if (!RawDeltaBuffer.empty())
+	{
+		const auto RawDelta = RawDeltaBuffer.front();
+		RawDeltaBuffer.pop();
+		return std::optional{RawDelta};
+	}
+	else
+	{
+		return std::nullopt;
+	}
+}
+
+void Mouse::OnMove(int InX, int InY) noexcept
 {
 	X = InX;
 	Y = InY;
@@ -85,7 +99,7 @@ void Mouse::OnWheelDelta(int InX, int InY, int InDelta)
 	}
 }
 
-void Mouse::OnMouseLeave() noexcept
+void Mouse::OnLeave() noexcept
 {
 	bIsInWindow = false;
 
@@ -93,7 +107,7 @@ void Mouse::OnMouseLeave() noexcept
 	TrimBuffer();
 }
 
-void Mouse::OnMouseEnter() noexcept
+void Mouse::OnEnter() noexcept
 {
 	bIsInWindow = true;
 
@@ -101,10 +115,24 @@ void Mouse::OnMouseEnter() noexcept
 	TrimBuffer();
 }
 
+void Mouse::OnRawDelta(int InDeltaX, int InDeltaY)
+{
+	RawDeltaBuffer.push({InDeltaX, InDeltaY});
+	TrimRawInputBuffer();
+}
+
 void Mouse::TrimBuffer() noexcept
 {
 	while (Buffer.size() > BufferSize)
 	{
 		Buffer.pop();
+	}
+}
+
+void Mouse::TrimRawInputBuffer() noexcept
+{
+	while (RawDeltaBuffer.size() > BufferSize)
+	{
+		RawDeltaBuffer.pop();
 	}
 }
