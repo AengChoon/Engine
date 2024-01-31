@@ -1,14 +1,11 @@
 ﻿#include "Model.h"
-
 #include <unordered_map>
-
 #include "Bindables.h"
 #include "Camera.h"
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
 #include "assimp/scene.h"
 #include "imgui/imgui.h"
-#include "imgui/imgui_internal.h"
 
 Mesh::Mesh(const Graphics& InGraphics, std::vector<std::unique_ptr<Bindable>>&& InBindables)
 {

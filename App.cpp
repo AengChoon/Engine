@@ -53,6 +53,42 @@ void App::DoFrame()
 		}
 	}
 
+	if (!MyWindow.IsCursorEnabled())
+	{
+		if (MyWindow.MyKeyboard.IsKeyPressed('W'))
+		{
+			MyCamera.Translate({0.0f, 0.0f, DeltaTime});
+		}
+		if (MyWindow.MyKeyboard.IsKeyPressed('A'))
+		{
+			MyCamera.Translate({-DeltaTime, 0.0f, 0.0f});
+		}
+		if (MyWindow.MyKeyboard.IsKeyPressed('S'))
+		{
+			MyCamera.Translate({0.0f, 0.0f, -DeltaTime});
+		}
+		if (MyWindow.MyKeyboard.IsKeyPressed('D'))
+		{
+			MyCamera.Translate({DeltaTime, 0.0f, 0.0f});
+		}
+		if (MyWindow.MyKeyboard.IsKeyPressed('R'))
+		{
+			MyCamera.Translate({0.0f, DeltaTime, 0.0f});
+		}
+		if (MyWindow.MyKeyboard.IsKeyPressed('F'))
+		{
+			MyCamera.Translate({0.0f, -DeltaTime, 0.0f});
+		}
+	}
+
+	while (const auto RawDelta = MyWindow.MyMouse.ReadRawDelta())
+	{
+		if (!MyWindow.IsCursorEnabled())
+		{
+			MyCamera.Rotate(static_cast<float>(RawDelta->DeltaX), static_cast<float>(RawDelta->DeltaY));
+		}
+	}
+
 	MyPointLight.ShowControlWindow();
 	MyPointLight.Draw(MyWindow.GetGraphics());
 	MyCamera.ShowControlWindow();

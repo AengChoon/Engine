@@ -4,19 +4,20 @@
 class Camera
 {
 public:
-	[[nodiscard]] DirectX::XMMATRIX GetMatrix() const noexcept;
+	Camera() noexcept;
+
 	void ShowControlWindow() noexcept;
-	DirectX::XMFLOAT3 GetPosition() const
-	{
-		return {0.0f, 0.0f, -Z};
-	}
 	void Reset() noexcept;
+	void Rotate(float InDeltaX, float InDeltaY) noexcept;
+	void Translate(DirectX::XMFLOAT3 InTranslation) noexcept;
+	[[nodiscard]] DirectX::XMMATRIX GetMatrix() const noexcept;
+	[[nodiscard]] DirectX::XMFLOAT3 GetPosition() const;
 
 private:
-	float Z {10.0f};
-	float Theta {0.0f};
-	float Phi {0.0f};
+	static constexpr float TranslationSpeed = 12.0f;
+	static constexpr float RotationSpeed = 0.004f;
+
+	DirectX::XMFLOAT3 Position;
 	float Pitch {0.0f};
 	float Yaw {0.0f};
-	float Roll {0.0f};
 };

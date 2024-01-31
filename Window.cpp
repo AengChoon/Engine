@@ -355,7 +355,25 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (const auto& [Header, Data] = reinterpret_cast<const RAWINPUT&>(*RawBuffer.data()); Header.dwType == RIM_TYPEMOUSE && (Data.mouse.lLastX != 0 || Data.mouse.lLastY != 0))
 			{
-				MyMouse.OnRawDelta(Data.mouse.lLastX, Data.mouse.lLastY);
+				if ((Data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) == MOUSE_MOVE_ABSOLUTE)
+				{
+					static DirectX::XMFLOAT3 LastPosition {FLT_MAX, FLT_MAX, FLT_MAX};
+					const bool bIsVirtualDesktop = (Data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) == MOUSE_VIRTUAL_DESKTOP;
+					const int Width = GetSystemMetrics(bIsVirtualDesktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
+					const int Height = GetSystemMetrics(bIsVirtualDesktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
+					const DirectX::XMFLOAT3 AbsolutePosition {Data.mouse.lLastX / static_cast<float>(USHRT_MAX) * Width, Data.mouse.lLastY / static_cast<float>(USHRT_MAX) * Height, 0};
+
+					if (LastPosition.x != FLT_MAX || LastPosition.y != FLT_MAX || LastPosition.z != FLT_MAX)
+					{
+						MyMouse.OnRawDelta(static_cast<int>(AbsolutePosition.x - LastPosition.x), static_cast<int>(AbsolutePosition.y - LastPosition.y));
+					}
+
+					LastPosition = AbsolutePosition;
+				}
+				else
+				{
+					MyMouse.OnRawDelta(Data.mouse.lLastX, Data.mouse.lLastY);
+				}
 			}
 		}
 		break;
