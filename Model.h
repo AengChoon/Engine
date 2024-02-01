@@ -21,19 +21,20 @@ private:
 class Node
 {
 	friend class Model;
-	friend class ModelWindow;
 
 public:
-	Node(std::string_view InName, std::vector<Mesh*>&& InMeshes, const DirectX::XMMATRIX& InTransformMatrix);
+	Node(int InID, std::string_view InName, std::vector<Mesh*>&& InMeshes, const DirectX::XMMATRIX& InTransformMatrix);
 	void Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulatedTransformMatrix) const;
 	void SetAppliedTransform(DirectX::FXMMATRIX InTransform);
+	void ShowTree(const Node** InSelectedNode) const;
+	[[nodiscard]] int GetID() const noexcept;
 
 private:
 	void AddChild(std::unique_ptr<Node>&& InNode);
-	void RenderTree(int* InCurrentNodeIndexAddress, int* InSelectedNodeIndexAddress, const Node** InSelectedNode) const;
 
 private:
 	std::string Name;
+	int ID;
 	std::vector<std::unique_ptr<Node>> Children;
 	std::vector<Mesh*> Meshes;
 	DirectX::XMFLOAT4X4 BaseTransform;
@@ -47,7 +48,7 @@ public:
 	~Model();
 
 	static std::unique_ptr<Mesh> ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh);
-	std::unique_ptr<Node> ParseNode(const aiNode& InNode);
+	std::unique_ptr<Node> ParseNode(int& InNextID, const aiNode& InNode);
 	void Draw(const Graphics& InGraphics) const;
 	void ShowWindow(std::string_view InWindowName = {}) const;
 
