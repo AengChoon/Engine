@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include "Bindables.h"
 #include "Camera.h"
+#include "Surface.h"
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
 #include "assimp/scene.h"
@@ -177,7 +178,7 @@ Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
 
 	for (size_t MeshIndex = 0; MeshIndex < Scene->mNumMeshes; ++MeshIndex)
 	{
-		Meshes.push_back(ParseMesh(InGraphics, *Scene->mMeshes[MeshIndex]));
+		Meshes.push_back(ParseMesh(InGraphics, *Scene->mMeshes[MeshIndex], Scene->mMaterials));
 	}
 
 	int NextID = 0;
@@ -187,16 +188,24 @@ Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
 
 Model::~Model() = default;
 
-std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh)
+std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh, aiMaterial const* const* InMaterials)
 {
-	DV::VertexBuffer ModelVertexBuffer {{DV::VertexLayout::ElementType::Position3D, DV::VertexLayout::ElementType::Normal}};
+	DV::VertexBuffer ModelVertexBuffer
+	{
+		{
+			DV::VertexLayout::ElementType::Position3D,
+			DV::VertexLayout::ElementType::Normal,
+			DV::VertexLayout::ElementType::Texture2D
+		}
+	};
 
 	for (unsigned int VertexIndex = 0; VertexIndex < InMesh.mNumVertices; ++VertexIndex)
 	{
 		ModelVertexBuffer.Emplace
 		(
 			*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mVertices[VertexIndex]),
-			*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mNormals[VertexIndex])
+			*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mNormals[VertexIndex]),
+			*reinterpret_cast<DirectX::XMFLOAT2*>(&InMesh.mTextureCoords[0][VertexIndex])
 		);
 	}
 
@@ -214,6 +223,15 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	}
 
 	std::vector<std::unique_ptr<Bindable>> Bindables;
+
+	auto& Material = *InMaterials[InMesh.mMaterialIndex];
+	aiString TextureFileName;
+	Material.GetTexture(aiTextureType_DIFFUSE, 0, &TextureFileName);
+
+	using namespace std::string_literals;
+	Bindables.push_back(std::make_unique<Texture>(InGraphics, Surface::FromFile("Models\\nanosuit_textured\\"s + TextureFileName.C_Str())));
+	Bindables.push_back(std::make_unique<Sampler>(InGraphics));
+
 	Bindables.push_back(std::make_unique<VertexBuffer>(InGraphics, ModelVertexBuffer));
 	Bindables.push_back(std::make_unique<IndexBuffer>(InGraphics, Indices));
 
@@ -226,7 +244,6 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 
 	struct PSMaterialConstants
 	{
-		alignas(16) DirectX::XMFLOAT3 Color {0.6f, 0.6f, 0.8f};
 		float SpecularIntensity = 0.6f;
 		float SpecularPower = 10.0f;
 		float Padding[2];

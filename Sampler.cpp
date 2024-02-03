@@ -1,7 +1,7 @@
 ﻿#include "Sampler.h"
 #include "ExceptionMacros.h"
 
-Sampler::Sampler(Graphics& InGraphics)
+Sampler::Sampler(const Graphics& InGraphics)
 {
 	HRESULT ResultHandle;
 

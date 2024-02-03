@@ -11,9 +11,9 @@ cbuffer Light
 
 cbuffer Material
 {
-    float3 Color;
     float SpecularIntensity;
     float SpecularPower;
+    float Padding[2];
 }
 
 cbuffer Camera
@@ -21,7 +21,11 @@ cbuffer Camera
     float3 CameraPosition;
 }
 
-float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Normal) : SV_TARGET
+Texture2D Texture;
+SamplerState Sampler;
+
+float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Normal,
+            const float2 InTextureCoordinate : TexCoord) : SV_TARGET
 {
     const float3 VectorToLight = Position - InWorldPosition;
     const float DistanceToLight = length(VectorToLight);
@@ -38,5 +42,5 @@ float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Nor
     const float3 VectorToLightReflected = -VectorToLight + 2.0f * VectorToLightProjectedToNormal;
     const float3 Specular = Attenuation * (DiffuseColor * DiffuseStrength) * SpecularIntensity * pow(max(0.0f, dot(normalize(VectorToLightReflected), normalize(CameraPosition - InWorldPosition))), SpecularPower);
 
-	return float4(saturate(Diffuse + AmbientColor + Specular) * Color, 1.0f);
+    return float4(saturate(Diffuse + AmbientColor + Specular), 1.0f) * Texture.Sample(Sampler, InTextureCoordinate);
 }

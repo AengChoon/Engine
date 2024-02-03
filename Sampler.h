@@ -4,7 +4,7 @@
 class Sampler : public Bindable
 {
 public:
-	Sampler(Graphics& InGraphics);
+	Sampler(const Graphics& InGraphics);
 	void Bind(const Graphics& InGraphics) noexcept override;
 
 protected:

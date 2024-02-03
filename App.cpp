@@ -30,7 +30,7 @@ void App::DoFrame()
 
 	MyWindow.GetGraphics().BeginFrame();
 
-	if (!Nano) { Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit.gltf"); }
+	if (!Nano) { Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj"); }
 
 	MyPointLight.Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
 	Nano->ShowWindow();
