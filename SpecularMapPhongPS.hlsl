@@ -21,7 +21,8 @@ cbuffer Camera
     float3 CameraPosition;
 }
 
-Texture2D Texture;
+Texture2D TextureMap;
+Texture2D SpecularMap;
 SamplerState Sampler;
 
 float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Normal,
@@ -40,7 +41,11 @@ float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Nor
     const float3 VectorToLightProjectedToNormal = InNormal * dot(VectorToLight, InNormal);
     // R = 2 * (L  N) - L
     const float3 VectorToLightReflected = -VectorToLight + 2.0f * VectorToLightProjectedToNormal;
-    const float3 Specular = Attenuation * (DiffuseColor * DiffuseStrength) * SpecularIntensity * pow(max(0.0f, dot(normalize(VectorToLightReflected), normalize(CameraPosition - InWorldPosition))), SpecularPower);
 
-    return float4(saturate((Diffuse + AmbientColor) * Texture.Sample(Sampler, InTextureCoordinate).rgb + Specular), 1.0f);
+    const float4 SpecularSample = SpecularMap.Sample(Sampler, InTextureCoordinate);
+    const float3 SpecularReflectionColor = SpecularSample.rgb;
+    const float  SpecularPower = pow(2.0f, SpecularSample.a * 13.0f);
+    const float3 Specular = Attenuation * (DiffuseColor * DiffuseStrength) * pow(max(0.0f, dot(normalize(VectorToLightReflected), normalize(CameraPosition - InWorldPosition))), SpecularPower);
+
+    return float4(saturate((Diffuse + AmbientColor) * TextureMap.Sample(Sampler, InTextureCoordinate).rgb + Specular * SpecularReflectionColor), 1.0f);
 }

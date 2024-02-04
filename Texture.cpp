@@ -2,7 +2,8 @@
 #include "ExceptionMacros.h"
 #include "Surface.h"
 
-Texture::Texture(const Graphics& InGraphics, const Surface& InSurface)
+Texture::Texture(const Graphics& InGraphics, const Surface& InSurface, unsigned int InSlot)
+	: Slot(InSlot)
 {
 	HRESULT ResultHandle;
 
@@ -46,5 +47,5 @@ Texture::Texture(const Graphics& InGraphics, const Surface& InSurface)
 
 void Texture::Bind(const Graphics& InGraphics) noexcept
 {
-	GetContext(InGraphics)->PSSetShaderResources(0u, 1u, MyTextureView.GetAddressOf());
+	GetContext(InGraphics)->PSSetShaderResources(Slot, 1u, MyTextureView.GetAddressOf());
 }

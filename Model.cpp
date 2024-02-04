@@ -225,11 +225,25 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	std::vector<std::unique_ptr<Bindable>> Bindables;
 
 	auto& Material = *InMaterials[InMesh.mMaterialIndex];
-	aiString TextureFileName;
-	Material.GetTexture(aiTextureType_DIFFUSE, 0, &TextureFileName);
-
 	using namespace std::string_literals;
-	Bindables.push_back(std::make_unique<Texture>(InGraphics, Surface::FromFile("Models\\nanosuit_textured\\"s + TextureFileName.C_Str())));
+	const auto BaseDirectory = "Models\\nanosuit_textured\\"s;
+	aiString TextureFileName;
+
+	Material.GetTexture(aiTextureType_DIFFUSE, 0, &TextureFileName);
+	Bindables.push_back(std::make_unique<Texture>(InGraphics, Surface::FromFile(BaseDirectory + TextureFileName.C_Str())));
+
+	bool bHasSpecularMap {false};
+	float Shininess = 35.0f;
+	if (Material.GetTexture(aiTextureType_SPECULAR, 0, &TextureFileName) == aiReturn_SUCCESS)
+	{
+		Bindables.push_back(std::make_unique<Texture>(InGraphics, Surface::FromFile(BaseDirectory + TextureFileName.C_Str()), 1));
+		bHasSpecularMap = true;
+	}
+	else
+	{
+		Material.Get(AI_MATKEY_SHININESS, Shininess);
+	}
+
 	Bindables.push_back(std::make_unique<Sampler>(InGraphics));
 
 	Bindables.push_back(std::make_unique<VertexBuffer>(InGraphics, ModelVertexBuffer));
@@ -239,17 +253,26 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
 	Bindables.push_back(std::move(ModelVertexShader));
 
-	Bindables.push_back(std::make_unique<PixelShader>(InGraphics, L"PhongPS.cso"));
 	Bindables.push_back(std::make_unique<InputLayout>(InGraphics, ModelVertexBuffer.GetLayout().GetD3D11Layout(), ModelVertexShaderBlob));
 
-	struct PSMaterialConstants
+	if (!bHasSpecularMap)
 	{
-		float SpecularIntensity = 0.6f;
-		float SpecularPower = 10.0f;
-		float Padding[2];
-	} MaterialConstants;
+		Bindables.push_back(std::make_unique<PixelShader>(InGraphics, L"PhongPS.cso"));
 
-	Bindables.push_back(std::make_unique<PixelConstantBuffer<PSMaterialConstants>>(InGraphics, MaterialConstants, 1u));
+		struct PSMaterialConstants
+		{
+			float SpecularIntensity {0.8f};
+			float SpecularPower;
+			float Padding[2];
+		} MaterialConstants;
+
+		MaterialConstants.SpecularPower = Shininess;
+		Bindables.push_back(std::make_unique<PixelConstantBuffer<PSMaterialConstants>>(InGraphics, MaterialConstants, 1u));	
+	}
+	else
+	{
+		Bindables.push_back(std::make_unique<PixelShader>(InGraphics, L"SpecularMapPhongPS.cso"));
+	}
 
 	struct PSCameraConstants
 	{
@@ -257,7 +280,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	} CameraConstants;
 
 	CameraConstants.Position = InGraphics.GetCamera().GetPosition();
-	Bindables.push_back(std::make_unique<PixelConstantBuffer<PSCameraConstants>>(InGraphics, CameraConstants, 2u));
+	Bindables.push_back(std::make_unique<PixelConstantBuffer<PSCameraConstants>>(InGraphics, CameraConstants, bHasSpecularMap ? 1u : 2u));
 
 	return std::make_unique<Mesh>(InGraphics, std::move(Bindables));
 }

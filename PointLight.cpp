@@ -24,7 +24,7 @@ void PointLight::ShowControlWindow() noexcept
 		ImGui::ColorEdit3("Color", &ConstantBufferData.AmbientColor.x);
 
 		ImGui::Text("Falloff");
-		ImGui::SliderFloat("Quadratic", &ConstantBufferData.QuadraticAttenuation, 0.05f, 10.0f, "%.2f");
+		ImGui::SliderFloat("Quadratic", &ConstantBufferData.QuadraticAttenuation, 0.0f, 10.0f, "%.2f");
 		ImGui::SliderFloat("Linear", &ConstantBufferData.LinearAttenuation, 0.0001f, 4.0f, "%.4f");
 		ImGui::SliderFloat("Constant", &ConstantBufferData.ConstantAttenuation, 0.0000001f, 10.0f, "%.7f");
 

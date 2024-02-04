@@ -13,7 +13,7 @@ struct VSOutput
 };
 
 VSOutput main(const float3 InModelPosition : Position, const float3 InNormal : Normal,
-              float2 InTextureCoordinate : TexCoord)
+              const float2 InTextureCoordinate : TexCoord)
 {
     VSOutput VSOutput;
     VSOutput.VertexWorldPosition = (float3) mul(float4(InModelPosition, 1.0f), Model);
