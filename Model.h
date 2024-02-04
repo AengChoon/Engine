@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
-#include "DrawableBase.h"
+#include <string_view>
+#include "Drawable.h"
 
 struct aiMaterial;
 struct aiMesh;
@@ -8,10 +9,10 @@ struct aiNode;
 class Graphics;
 class ModelWindow;
 
-class Mesh : public DrawableBase<Mesh>
+class Mesh : public Drawable
 {
 public:
-	Mesh(const Graphics& InGraphics, std::vector<std::unique_ptr<Bindable>>&& InBindables);
+	Mesh(const Graphics& InGraphics, std::vector<std::shared_ptr<Bindable>>&& InBindables);
 	void Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulatedTransform) const;
 	[[nodiscard]] DirectX::XMMATRIX GetTransformMatrix() const noexcept override;
 

@@ -4,51 +4,50 @@
 
 SolidSphere::SolidSphere(Graphics& InGraphics, float InRadius)
 {
-	if (!IsStaticInitialized())
+	struct Vertex
 	{
-		struct Vertex
-		{
-			DirectX::XMFLOAT3 Position;
-		};
+		DirectX::XMFLOAT3 Position;
+	};
 
-		auto Model = Sphere::Make<Vertex>();
-		Model.Transform(DirectX::XMMatrixScaling(InRadius, InRadius, InRadius));
-		AddStaticBindable(std::make_unique<VertexBuffer>(InGraphics, Model.Vertices));
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(InGraphics, Model.Indices));
+	auto Model = Sphere::Make();
+	Model.Transform(DirectX::XMMatrixScaling(InRadius, InRadius, InRadius));
 
-		auto pvs = std::make_unique<VertexShader>(InGraphics, L"SolidVS.cso");
-		auto pvsbc = pvs->GetByteCode();
-		AddStaticBindable(std::move( pvs ));
+	Bind(std::make_shared<VertexBuffer>(InGraphics, Model.Vertices));
 
-		AddStaticBindable(std::make_unique<PixelShader>(InGraphics, L"SolidPS.cso"));
+	Bind(std::make_shared<IndexBuffer>(InGraphics, Model.Indices));
 
-		struct PSColorConstant
-		{
-			DirectX::XMFLOAT3 color = { 1.0f,1.0f,1.0f };
-			float padding;
-		} colorConst;
+	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, L"SolidVS.cso");
+	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
+	Bind(std::move( ModelVertexShader ));
 
-		AddStaticBindable(std::make_unique<PixelConstantBuffer<PSColorConstant>>(InGraphics, colorConst));
+	Bind(std::make_shared<PixelShader>(InGraphics, L"SolidPS.cso"));
 
-		const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
-		{
-			{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		};
-
-		AddStaticBindable(std::make_unique<InputLayout>(InGraphics, ied, pvsbc));
-
-		AddStaticBindable(std::make_unique<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-	}
-	else
+	struct PSColorConstants
 	{
-		SetIndexBufferFromStaticBindables();
-	}
+		DirectX::XMFLOAT3 color {1.0f,1.0f,1.0f};
+		float padding;
+	} ModelColorConstants;
 
-	AddInstanceBindable(std::make_unique<TransformConstantBuffer>(InGraphics, *this));
-}
+	Bind(std::make_shared<PixelConstantBuffer<PSColorConstants>>(InGraphics, ModelColorConstants));
 
-void SolidSphere::Update(float InDeltaTime) noexcept
-{
+	const std::vector<D3D11_INPUT_ELEMENT_DESC> ModelInputElementDescs =
+	{
+		{
+			"Position",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			0,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		}
+	};
+
+	Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
+
+	Bind(std::make_shared<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+
+	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
 }
 
 DirectX::XMMATRIX SolidSphere::GetTransformMatrix() const noexcept

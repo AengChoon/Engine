@@ -2,8 +2,17 @@
 #include "Bindable.h"
 #include "IndexBuffer.h"
 
-void Drawable::Update(float InDeltaTime) noexcept
+Drawable::~Drawable() = default;
+
+void Drawable::Bind(std::shared_ptr<Bindable> InBindable)
 {
+	if (typeid(*InBindable) == typeid(IndexBuffer))
+	{
+		assert(BoundIndexBuffer == nullptr && "Binding multiple indexbuffers!");
+		BoundIndexBuffer = static_cast<const IndexBuffer*>(InBindable.get());
+	}
+
+	Bindables.push_back(std::move(InBindable));
 }
 
 void Drawable::Draw(const Graphics& InGraphics) const
@@ -13,21 +22,5 @@ void Drawable::Draw(const Graphics& InGraphics) const
 		Bindable->Bind(InGraphics);
 	}
 
-	for (const auto& StaticBindable : GetStaticBindables())
-	{
-		StaticBindable->Bind(InGraphics);
-	}
-
-	InGraphics.DrawIndexed(MyIndexBuffer->GetCount());
-}
-
-void Drawable::AddInstanceBindable(std::unique_ptr<Bindable> InBindable)
-{
-	Bindables.emplace_back(std::move(InBindable));
-}
-
-void Drawable::AddInstanceIndexBuffer(std::unique_ptr<IndexBuffer> InIndexBuffer) noexcept
-{
-	MyIndexBuffer = InIndexBuffer.get();
-	Bindables.emplace_back(std::move(InIndexBuffer));
+	InGraphics.DrawIndexed(BoundIndexBuffer->GetCount());
 }

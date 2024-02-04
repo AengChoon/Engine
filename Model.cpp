@@ -8,27 +8,16 @@
 #include "assimp/scene.h"
 #include "imgui/imgui.h"
 
-Mesh::Mesh(const Graphics& InGraphics, std::vector<std::unique_ptr<Bindable>>&& InBindables)
+Mesh::Mesh(const Graphics& InGraphics, std::vector<std::shared_ptr<Bindable>>&& InBindables)
 {
-	if (!IsStaticInitialized())
-	{
-		AddStaticBindable(std::make_unique<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-	}
+	Bind(std::make_shared<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
 	for (auto& Bindable : InBindables)
 	{
-		if (auto* MeshIndexBuffer = dynamic_cast<IndexBuffer*>(Bindable.get()))
-		{
-			AddInstanceIndexBuffer(std::unique_ptr<IndexBuffer>{MeshIndexBuffer});
-			Bindable.release();
-		}
-		else
-		{
-			AddInstanceBindable(std::move(Bindable));
-		}
+		Bind(std::move(Bindable));
 	}
 
-	AddInstanceBindable(std::make_unique<TransformConstantBuffer>(InGraphics, *this));
+	Bind(std::make_unique<TransformConstantBuffer>(InGraphics, *this));
 }
 
 void Mesh::Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulatedTransform) const
@@ -222,7 +211,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 		}
 	}
 
-	std::vector<std::unique_ptr<Bindable>> Bindables;
+	std::vector<std::shared_ptr<Bindable>> Bindables;
 
 	auto& Material = *InMaterials[InMesh.mMaterialIndex];
 	using namespace std::string_literals;
@@ -230,13 +219,13 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	aiString TextureFileName;
 
 	Material.GetTexture(aiTextureType_DIFFUSE, 0, &TextureFileName);
-	Bindables.push_back(std::make_unique<Texture>(InGraphics, Surface::FromFile(BaseDirectory + TextureFileName.C_Str())));
+	Bindables.push_back(std::make_shared<Texture>(InGraphics, Surface::FromFile(BaseDirectory + TextureFileName.C_Str())));
 
 	bool bHasSpecularMap {false};
 	float Shininess = 35.0f;
 	if (Material.GetTexture(aiTextureType_SPECULAR, 0, &TextureFileName) == aiReturn_SUCCESS)
 	{
-		Bindables.push_back(std::make_unique<Texture>(InGraphics, Surface::FromFile(BaseDirectory + TextureFileName.C_Str()), 1));
+		Bindables.push_back(std::make_shared<Texture>(InGraphics, Surface::FromFile(BaseDirectory + TextureFileName.C_Str()), 1));
 		bHasSpecularMap = true;
 	}
 	else
@@ -244,20 +233,20 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 		Material.Get(AI_MATKEY_SHININESS, Shininess);
 	}
 
-	Bindables.push_back(std::make_unique<Sampler>(InGraphics));
+	Bindables.push_back(std::make_shared<Sampler>(InGraphics));
 
-	Bindables.push_back(std::make_unique<VertexBuffer>(InGraphics, ModelVertexBuffer));
-	Bindables.push_back(std::make_unique<IndexBuffer>(InGraphics, Indices));
+	Bindables.push_back(std::make_shared<VertexBuffer>(InGraphics, ModelVertexBuffer));
+	Bindables.push_back(std::make_shared<IndexBuffer>(InGraphics, Indices));
 
-	auto ModelVertexShader = std::make_unique<VertexShader>(InGraphics, L"PhongVS.cso");
+	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, L"PhongVS.cso");
 	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
 	Bindables.push_back(std::move(ModelVertexShader));
 
-	Bindables.push_back(std::make_unique<InputLayout>(InGraphics, ModelVertexBuffer.GetLayout().GetD3D11Layout(), ModelVertexShaderBlob));
+	Bindables.push_back(std::make_shared<InputLayout>(InGraphics, ModelVertexBuffer.GetLayout().GetD3D11Layout(), ModelVertexShaderBlob));
 
 	if (!bHasSpecularMap)
 	{
-		Bindables.push_back(std::make_unique<PixelShader>(InGraphics, L"PhongPS.cso"));
+		Bindables.push_back(std::make_shared<PixelShader>(InGraphics, L"PhongPS.cso"));
 
 		struct PSMaterialConstants
 		{
@@ -267,11 +256,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 		} MaterialConstants;
 
 		MaterialConstants.SpecularPower = Shininess;
-		Bindables.push_back(std::make_unique<PixelConstantBuffer<PSMaterialConstants>>(InGraphics, MaterialConstants, 1u));	
+		Bindables.push_back(std::make_shared<PixelConstantBuffer<PSMaterialConstants>>(InGraphics, MaterialConstants, 1u));	
 	}
 	else
 	{
-		Bindables.push_back(std::make_unique<PixelShader>(InGraphics, L"SpecularMapPhongPS.cso"));
+		Bindables.push_back(std::make_shared<PixelShader>(InGraphics, L"SpecularMapPhongPS.cso"));
 	}
 
 	struct PSCameraConstants
@@ -280,7 +269,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	} CameraConstants;
 
 	CameraConstants.Position = InGraphics.GetCamera().GetPosition();
-	Bindables.push_back(std::make_unique<PixelConstantBuffer<PSCameraConstants>>(InGraphics, CameraConstants, bHasSpecularMap ? 1u : 2u));
+	Bindables.push_back(std::make_shared<PixelConstantBuffer<PSCameraConstants>>(InGraphics, CameraConstants, bHasSpecularMap ? 1u : 2u));
 
 	return std::make_unique<Mesh>(InGraphics, std::move(Bindables));
 }

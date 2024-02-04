@@ -3,71 +3,65 @@
 #include "Cube.h"
 #include "Surface.h"
 
-TexturedBox::TexturedBox(Graphics& InGraphics, std::mt19937& InRandomGenerator,
-                         std::uniform_real_distribution<float>& InA, std::uniform_real_distribution<float>& InB,
-                         std::uniform_real_distribution<float>& InC, std::uniform_real_distribution<float>& InD)
-	: X(InD(InRandomGenerator)),
-	  Theta(InA(InRandomGenerator)), Phi(InA(InRandomGenerator)), Chi(InA(InRandomGenerator)),
-	  DeltaRoll(InB(InRandomGenerator)), DeltaPitch(InB(InRandomGenerator)), DeltaYaw(InB(InRandomGenerator)),
-	  DeltaTheta(InC(InRandomGenerator)), DeltaPhi(InC(InRandomGenerator)), DeltaChi(InC(InRandomGenerator))
+TexturedBox::TexturedBox(const Graphics& InGraphics)
 {
-	if (!IsStaticInitialized())
+	struct Vertex
 	{
-		struct Vertex
+		DirectX::XMFLOAT3 Position;
+
+		struct 
 		{
-			DirectX::XMFLOAT3 Position;
+			float U;
+			float V;
+		} TextureCoordinates;
+	};
 
-			struct 
-			{
-				float U;
-				float V;
-			} Texture;
-		};
+	const auto Model = Cube::MakeTextured();
 
-		const auto Model = Cube::MakeTextured<Vertex>();
+	Bind(std::make_shared<VertexBuffer>(InGraphics, Model.Vertices));
 
-		AddStaticBindable(std::make_unique<VertexBuffer>(InGraphics, Model.Vertices));
-		AddStaticBindable(std::make_unique<Texture>(InGraphics, Surface::FromFile("Images\\cube.png")));
-		AddStaticBindable(std::make_unique<Sampler>(InGraphics));
+	Bind(std::make_shared<IndexBuffer>(InGraphics, Model.Indices));
 
-		auto BoxVertexShader = std::make_unique<VertexShader>(InGraphics, L"TextureVS.cso");
-		auto BoxVertexShaderBlob = BoxVertexShader->GetByteCode();
-		AddStaticBindable(std::move(BoxVertexShader));
+	Bind(std::make_shared<Texture>(InGraphics, Surface::FromFile("Images\\cube.png")));
 
-		AddStaticBindable(std::make_unique<PixelShader>(InGraphics, L"TexturePS.cso"));
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(InGraphics, Model.Indices));
+	Bind(std::make_shared<Sampler>(InGraphics));
 
-		const std::vector<D3D11_INPUT_ELEMENT_DESC> InputElementDescs =
-		{
-			{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"TextureCoordinate", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
-		};
+	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, L"TextureVS.cso");
+	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
+	Bind(std::move(ModelVertexShader));
 
-		AddStaticBindable(std::make_unique<InputLayout>(InGraphics, InputElementDescs, BoxVertexShaderBlob));
-		AddStaticBindable(std::make_unique<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-	}
-	else
+	Bind(std::make_shared<PixelShader>(InGraphics, L"TexturePS.cso"));
+
+	const std::vector<D3D11_INPUT_ELEMENT_DESC> ModelInputElementDescs =
 	{
-		SetIndexBufferFromStaticBindables();
-	}
+		{
+			"Position",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			0,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+		{
+			"TextureCoordinate",
+			0,
+			DXGI_FORMAT_R32G32_FLOAT,
+			0,
+			12,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		}
+	};
 
-	AddInstanceBindable(std::make_unique<TransformConstantBuffer>(InGraphics, *this));
-}
+	Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
 
-void TexturedBox::Update(float InDeltaTime) noexcept
-{
-	Roll += DeltaRoll * InDeltaTime;
-	Pitch += DeltaPitch * InDeltaTime;
-	Yaw += DeltaYaw * InDeltaTime;
-	Theta += DeltaTheta * InDeltaTime;
-	Phi += DeltaPhi * InDeltaTime;
-	Chi += DeltaChi * InDeltaTime;
+	Bind(std::make_shared<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+
+	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
 }
 
 DirectX::XMMATRIX TexturedBox::GetTransformMatrix() const noexcept
 {
-	return DirectX::XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll) *
-		   DirectX::XMMatrixTranslation(X, 0.0f, 0.0f) *
-		   DirectX::XMMatrixRotationRollPitchYaw(Theta, Phi, Chi) *
-		   DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f);
+	return DirectX::XMMatrixTranslation(X, Y, Z);
 }

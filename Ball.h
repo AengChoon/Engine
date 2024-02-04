@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include <random>
-#include "DrawableBase.h"
+#include "Drawable.h"
 
-class Ball : public DrawableBase<Ball>
+class Ball : public Drawable
 {
 public:
 	Ball(Graphics& InGraphics, std::mt19937& InRandomGenerator, std::uniform_real_distribution<float>& InA,
@@ -10,7 +10,6 @@ public:
 	    std::uniform_real_distribution<float>& InD, std::uniform_int_distribution<int>& InLongitude,
 		std::uniform_int_distribution<int>& InLatitude);
 
-	void Update(float InDeltaTime) noexcept override;
 	[[nodiscard]] DirectX::XMMATRIX GetTransformMatrix() const noexcept override;
 
 private:

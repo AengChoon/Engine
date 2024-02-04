@@ -2,37 +2,28 @@
 #include "EngineWin.h"
 #include <DirectXMath.h>
 #include <memory>
-#include "Graphics.h"
+#include <vector>
 
+class Graphics;
 class Bindable;
 class IndexBuffer;
 
 class Drawable
 {
-	template<typename T>
-	friend class DrawableBase;
-
 public:
 	Drawable() = default;
 	Drawable(const Drawable&) = delete;
 	Drawable(Drawable&&) = delete;
 	Drawable& operator=(const Drawable&) = delete;
 	Drawable& operator=(Drawable&&) = delete;
-	virtual ~Drawable() = default;
+	virtual ~Drawable();
 
-	virtual void Update(float InDeltaTime) noexcept;
 	[[nodiscard]] virtual DirectX::XMMATRIX GetTransformMatrix() const noexcept = 0;
 
+	void Bind(std::shared_ptr<Bindable> InBindable);
 	void Draw(const Graphics& InGraphics) const;
 
-protected:
-	void AddInstanceBindable(std::unique_ptr<Bindable> InBindable);
-	void AddInstanceIndexBuffer(std::unique_ptr<IndexBuffer> InIndexBuffer) noexcept;
-
 private:
-	[[nodiscard]] virtual const std::vector<std::unique_ptr<Bindable>>& GetStaticBindables() const noexcept = 0;
-
-private:
-	const IndexBuffer* MyIndexBuffer = nullptr;
-	std::vector<std::unique_ptr<Bindable>> Bindables;
+	const IndexBuffer* BoundIndexBuffer = nullptr;
+	std::vector<std::shared_ptr<Bindable>> Bindables;
 };
