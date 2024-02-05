@@ -3,7 +3,7 @@
 
 IndexedTriangleList Sphere::Make(DV::VertexLayout InLayout)
 {
-	if (!InLayout.Size())
+	if (!InLayout.Num())
 	{
 		InLayout.Append(DV::VertexLayout::ElementType::Position3D);
 	}

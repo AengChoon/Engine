@@ -6,7 +6,7 @@ class Cube
 public:
 	static IndexedTriangleList Make(DV::VertexLayout InLayout = {})
 	{
-		if (!InLayout.Size())
+		if (!InLayout.Num())
 		{
 			InLayout.Append(DV::VertexLayout::ElementType::Position3D);
 		}
@@ -38,7 +38,7 @@ public:
 
 	static IndexedTriangleList MakeTextured(DV::VertexLayout InLayout = {})
 	{
-		if (!InLayout.Size())
+		if (!InLayout.Num())
 		{
 			InLayout.Append(DV::VertexLayout::ElementType::Position3D).Append(DV::VertexLayout::ElementType::Texture2D);
 		}
@@ -146,7 +146,7 @@ public:
 
 	static IndexedTriangleList MakeIndependent(DV::VertexLayout InLayout = {})
 	{
-		if (!InLayout.Size())
+		if (!InLayout.Num())
 		{
 			InLayout.Append(DV::VertexLayout::ElementType::Position3D);
 		}

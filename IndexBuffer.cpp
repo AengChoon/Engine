@@ -1,8 +1,15 @@
 ﻿#include "IndexBuffer.h"
+#include "BindManager.h"
 #include "ExceptionMacros.h"
 
 IndexBuffer::IndexBuffer(const Graphics& InGraphics, const std::vector<unsigned int>& InIndices)
-	: Count(static_cast<UINT>(InIndices.size()))
+	: IndexBuffer(InGraphics, "?", InIndices)
+{
+}
+
+IndexBuffer::IndexBuffer(const Graphics& InGraphics, const std::string& InTag, const std::vector<unsigned>& InIndices)
+	: Tag(InTag)
+	, Count(static_cast<UINT>(InIndices.size()))
 {
 	HRESULT ResultHandle;
 
@@ -23,4 +30,37 @@ IndexBuffer::IndexBuffer(const Graphics& InGraphics, const std::vector<unsigned 
 		&SubresourceData,
 		&MyIndexBuffer)
 	)
+}
+
+void IndexBuffer::Bind(const Graphics& InGraphics) noexcept
+{
+	GetContext(InGraphics)->IASetIndexBuffer
+	(
+		MyIndexBuffer.Get(),
+		DXGI_FORMAT_R32_UINT,
+		0u
+	);
+}
+
+UINT IndexBuffer::GetCount() const noexcept
+{
+	return Count;
+}
+
+std::shared_ptr<IndexBuffer> IndexBuffer::Resolve(const Graphics& InGraphics, const std::string& InTag,
+                                                  const std::vector<unsigned>& InIndices)
+{
+	assert(InTag != "?");
+	return BindManager::Resolve<IndexBuffer>(InGraphics, InTag, InIndices);
+}
+
+std::string IndexBuffer::GenerateUniqueIDImpl(const std::string& InTag)
+{
+	using namespace std::string_literals;
+	return typeid(IndexBuffer).name() + "#"s + InTag;
+}
+
+std::string IndexBuffer::GetUniqueID() const noexcept
+{
+	return GenerateUniqueID(Tag);
 }

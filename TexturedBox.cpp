@@ -22,15 +22,15 @@ TexturedBox::TexturedBox(const Graphics& InGraphics)
 
 	Bind(std::make_shared<IndexBuffer>(InGraphics, Model.Indices));
 
-	Bind(std::make_shared<Texture>(InGraphics, Surface::FromFile("Images\\cube.png")));
+	Bind(std::make_shared<Texture>(InGraphics, "Images\\cube.png"));
 
 	Bind(std::make_shared<Sampler>(InGraphics));
 
-	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, L"TextureVS.cso");
+	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, "TextureVS.cso");
 	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
 	Bind(std::move(ModelVertexShader));
 
-	Bind(std::make_shared<PixelShader>(InGraphics, L"TexturePS.cso"));
+	Bind(std::make_shared<PixelShader>(InGraphics, "TexturePS.cso"));
 
 	const std::vector<D3D11_INPUT_ELEMENT_DESC> ModelInputElementDescs =
 	{
@@ -54,9 +54,9 @@ TexturedBox::TexturedBox(const Graphics& InGraphics)
 		}
 	};
 
-	Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
+	// Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
 
-	Bind(std::make_shared<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	Bind(std::make_shared<Topology>(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
 	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
 }

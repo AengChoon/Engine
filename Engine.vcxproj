@@ -91,6 +91,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Ball.cpp" />
+    <ClCompile Include="BindManager.cpp" />
     <ClCompile Include="Box.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Drawable.cpp" />
@@ -110,7 +111,7 @@
     <ClCompile Include="IndexBuffer.cpp" />
     <ClCompile Include="InputLayout.cpp" />
     <ClCompile Include="Keyboard.cpp" />
-    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="PointLight.cpp" />
@@ -120,7 +121,9 @@
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TexturedBox.cpp" />
+    <ClCompile Include="Topology.cpp" />
     <ClCompile Include="TransformConstantBuffer.cpp" />
+    <ClCompile Include="VertexBuffer.cpp" />
     <ClCompile Include="VertextShader.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="WinMain.cpp" />
@@ -129,6 +132,7 @@
     <ClInclude Include="App.h" />
     <ClInclude Include="Ball.h" />
     <ClInclude Include="Bindable.h" />
+    <ClInclude Include="BindManager.h" />
     <ClInclude Include="Bindables.h" />
     <ClInclude Include="Box.h" />
     <ClInclude Include="Camera.h" />
@@ -238,7 +242,7 @@
     <ClInclude Include="IndexedTriangleList.h" />
     <ClInclude Include="InputLayout.h" />
     <ClInclude Include="Keyboard.h" />
-    <ClInclude Include="Model.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PointLight.h" />

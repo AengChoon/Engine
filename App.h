@@ -2,7 +2,7 @@
 #include "Camera.h"
 #include "EngineTimer.h"
 #include "ImguiManager.h"
-#include "Model.h"
+#include "Mesh.h"
 #include "PointLight.h"
 #include "Window.h"
 
@@ -24,4 +24,5 @@ private:
 	PointLight MyPointLight;
 	float SpeedFactor {1.0f};
 	std::unique_ptr<Model> Nano;
+	std::unique_ptr<Model> Nano2;
 };

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <string>
 #include <vector>
 
 namespace DV
@@ -34,6 +35,7 @@ namespace DV
 			using SystemType = DirectX::XMFLOAT2;
 			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32_FLOAT;
 			static constexpr const char* Semantic = "Position";
+			static constexpr const char* Code = "P2";
 		};
 
 		template<> struct TypeMap<ElementType::Position3D>
@@ -41,6 +43,7 @@ namespace DV
 			using SystemType = DirectX::XMFLOAT3;
 			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 			static constexpr const char* Semantic = "Position";
+			static constexpr const char* Code = "P3";
 		};
 
 		template<> struct TypeMap<ElementType::Texture2D>
@@ -48,6 +51,7 @@ namespace DV
 			using SystemType = DirectX::XMFLOAT2;
 			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32_FLOAT;
 			static constexpr const char* Semantic = "TexCoord";
+			static constexpr const char* Code = "T2";
 		};
 
 		template<> struct TypeMap<ElementType::Normal>
@@ -55,6 +59,7 @@ namespace DV
 			using SystemType = DirectX::XMFLOAT3;
 			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 			static constexpr const char* Semantic = "Normal";
+			static constexpr const char* Code = "N";
 		};
 
 		template<> struct TypeMap<ElementType::Float3Color>
@@ -62,6 +67,7 @@ namespace DV
 			using SystemType = DirectX::XMFLOAT3;
 			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 			static constexpr const char* Semantic = "Color";
+			static constexpr const char* Code = "RGB";
 		};
 
 		template<> struct TypeMap<ElementType::Float4Color>
@@ -69,6 +75,7 @@ namespace DV
 			using SystemType = DirectX::XMFLOAT4;
 			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
 			static constexpr const char* Semantic = "Color";
+			static constexpr const char* Code = "RGBA32";
 		};
 
 		template<> struct TypeMap<ElementType::BGRAColor>
@@ -76,6 +83,7 @@ namespace DV
 			using SystemType = BGRAColor;
 			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 			static constexpr const char* Semantic = "Color";
+			static constexpr const char* Code = "RGBA8";
 		};
 
 		class Element
@@ -123,6 +131,30 @@ namespace DV
 				return ByteOffset;
 			}
 
+			[[nodiscard]] const char* GetCode() const noexcept
+			{
+				switch (Type)
+				{
+				case ElementType::Position2D:
+					return TypeMap<ElementType::Position2D>::Code;
+				case ElementType::Position3D:
+					return TypeMap<ElementType::Position3D>::Code;
+				case ElementType::Texture2D:
+					return TypeMap<ElementType::Texture2D>::Code;
+				case ElementType::Normal:	
+					return TypeMap<ElementType::Normal>::Code;
+				case ElementType::Float3Color:
+					return TypeMap<ElementType::Float3Color>::Code;
+				case ElementType::Float4Color:	
+					return TypeMap<ElementType::Float4Color>::Code;
+				case ElementType::BGRAColor:
+					return TypeMap<ElementType::BGRAColor>::Code;
+				default:
+					assert(false && "Invalid Element Type");
+					return nullptr;
+				}
+			}
+
 			[[nodiscard]] size_t Size() const
 			{
 				return SizeOf(Type);
@@ -154,7 +186,7 @@ namespace DV
 
 		private:
 			template<ElementType T>
-			static constexpr D3D11_INPUT_ELEMENT_DESC GenerateDesc(const size_t InOffset)
+			static constexpr D3D11_INPUT_ELEMENT_DESC GenerateDesc(const size_t InOffset) noexcept
 			{
 				using ElementType = TypeMap<T>;
 				return {ElementType::Semantic,0, ElementType::DxgiFormat,
@@ -171,13 +203,13 @@ namespace DV
 		{
 			for (const auto ElementType : InElementTypeList)
 			{
-				Elements.emplace_back(ElementType, ByteSize());
+				Elements.emplace_back(ElementType, Size());
 			}
 		}
 
 		VertexLayout& Append(ElementType InElementType)
 		{
-			Elements.emplace_back(InElementType, ByteSize());
+			Elements.emplace_back(InElementType, Size());
 			return *this;
 		}
 
@@ -200,15 +232,27 @@ namespace DV
 
 		[[nodiscard]] std::vector<D3D11_INPUT_ELEMENT_DESC> GetD3D11Layout() const
 		{
-			std::vector<D3D11_INPUT_ELEMENT_DESC> Descs;
-			Descs.reserve(Size());
+			std::vector<D3D11_INPUT_ELEMENT_DESC> InputElementDescs;
+			InputElementDescs.reserve(Num());
 
 			for (const auto& Element : Elements)
 			{
-				Descs.push_back(Element.GetDesc());
+				InputElementDescs.push_back(Element.GetDesc());
 			}
 
-			return Descs;
+			return InputElementDescs;
+		}
+
+		[[nodiscard]] std::string GetCode() const
+		{
+			std::string AccumulatedCode;
+
+			for (const auto& Element : Elements)
+			{
+				AccumulatedCode += Element.GetCode();
+			}
+
+			return AccumulatedCode;
 		}
 
 		[[nodiscard]] const Element& ResolveByIndex(const size_t InIndex) const
@@ -216,7 +260,7 @@ namespace DV
 			return Elements[InIndex];
 		}
 
-		[[nodiscard]] size_t ByteSize() const
+		[[nodiscard]] size_t Size() const
 		{
 			if (!Elements.empty())
 			{
@@ -229,7 +273,7 @@ namespace DV
 			}
 		}
 
-		[[nodiscard]] size_t Size() const
+		[[nodiscard]] size_t Num() const
 		{
 			return Elements.size();
 		}
@@ -338,7 +382,7 @@ namespace DV
 
 		[[nodiscard]] size_t Num() const
 		{
-			return Buffer.size() / Layout.ByteSize();
+			return Buffer.size() / Layout.Size();
 		}
 
 		[[nodiscard]] size_t Size() const
@@ -349,15 +393,15 @@ namespace DV
 		template<typename ...Params>
 		void Emplace(Params&&... InParams)
 		{
-			assert(sizeof...(InParams) == Layout.Size() && "Parameter count doesn't match vertex count");
-			Buffer.resize(Buffer.size() + Layout.ByteSize());
+			assert(sizeof...(InParams) == Layout.Num() && "Parameter count doesn't match vertex count");
+			Buffer.resize(Buffer.size() + Layout.Size());
 			Back().SetAttributeByIndex(0u, std::forward<Params>(InParams)...);
 		}
 
 		Vertex Back()
 		{
 			assert(!Buffer.empty());
-			return Vertex{Buffer.data() + Buffer.size() - Layout.ByteSize(), Layout};
+			return Vertex{Buffer.data() + Buffer.size() - Layout.Size(), Layout};
 		}
 
 		Vertex Front()
@@ -369,7 +413,7 @@ namespace DV
 		Vertex operator[](const size_t InIndex)
 		{
 			assert(InIndex < Num());
-			return Vertex{Buffer.data() + Layout.ByteSize() * InIndex, Layout};
+			return Vertex{Buffer.data() + Layout.Size() * InIndex, Layout};
 		}
 	};
 }

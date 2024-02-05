@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Bindable.h"
+#include "BindManager.h"
 #include "ExceptionMacros.h"
 
 template<typename T>
@@ -89,6 +90,32 @@ public:
 			ConstantBuffer<T>::MyConstantBuffer.GetAddressOf()
 		);
 	}
+
+	[[nodiscard]] static std::shared_ptr<VertexConstantBuffer> Resolve(const Graphics& InGraphics, const T& InConstants, UINT InSlot = 0)
+	{
+		return BindManager::Resolve<VertexConstantBuffer>(InGraphics, InConstants, InSlot);
+	}
+
+	[[nodiscard]] static std::shared_ptr<VertexConstantBuffer> Resolve(const Graphics& InGraphics, UINT InSlot = 0)
+	{
+		return BindManager::Resolve<VertexConstantBuffer>(InGraphics, InSlot);
+	}
+
+	[[nodiscard]] static std::string GenerateUniqueID(const T& InConstants, const UINT InSlot)
+	{
+		return GenerateUniqueID(InSlot);
+	}
+
+	[[nodiscard]] static std::string GenerateUniqueID(const UINT InSlot = 0)
+	{
+		using namespace std::string_literals;
+		return typeid(VertexConstantBuffer).name() + "#"s + std::to_string(InSlot);
+	}
+
+	[[nodiscard]] std::string GetUniqueID() const noexcept override
+	{
+		return GenerateUniqueID(ConstantBuffer<T>::Slot);
+	}
 };
 
 template<typename T>
@@ -105,5 +132,31 @@ public:
 			1u,
 			ConstantBuffer<T>::MyConstantBuffer.GetAddressOf()
 		);
+	}
+
+	[[nodiscard]] static std::shared_ptr<PixelConstantBuffer> Resolve(const Graphics& InGraphics, const T& InConstants, UINT InSlot = 0)
+	{
+		return BindManager::Resolve<PixelConstantBuffer>(InGraphics, InConstants, InSlot);
+	}
+
+	[[nodiscard]] static std::shared_ptr<PixelConstantBuffer> Resolve(const Graphics& InGraphics, UINT InSlot = 0)
+	{
+		return BindManager::Resolve<PixelConstantBuffer>(InGraphics, InSlot);
+	}
+
+	[[nodiscard]] static std::string GenerateUniqueID(const T& InConstants, const UINT InSlot)
+	{
+		return GenerateUniqueID(InSlot);
+	}
+
+	[[nodiscard]] static std::string GenerateUniqueID(const UINT InSlot = 0)
+	{
+		using namespace std::string_literals;
+		return typeid(PixelConstantBuffer).name() + "#"s + std::to_string(InSlot);
+	}
+
+	[[nodiscard]] std::string GetUniqueID() const noexcept override
+	{
+		return GenerateUniqueID(ConstantBuffer<T>::Slot);
 	}
 };

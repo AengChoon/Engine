@@ -1,4 +1,4 @@
-﻿#include "Model.h"
+﻿#include "Mesh.h"
 #include <unordered_map>
 #include "Bindables.h"
 #include "Camera.h"
@@ -10,7 +10,7 @@
 
 Mesh::Mesh(const Graphics& InGraphics, std::vector<std::shared_ptr<Bindable>>&& InBindables)
 {
-	Bind(std::make_shared<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	Bind(Topology::Resolve(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
 	for (auto& Bindable : InBindables)
 	{
@@ -219,13 +219,13 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	aiString TextureFileName;
 
 	Material.GetTexture(aiTextureType_DIFFUSE, 0, &TextureFileName);
-	Bindables.push_back(std::make_shared<Texture>(InGraphics, Surface::FromFile(BaseDirectory + TextureFileName.C_Str())));
+	Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str()));
 
 	bool bHasSpecularMap {false};
 	float Shininess = 35.0f;
 	if (Material.GetTexture(aiTextureType_SPECULAR, 0, &TextureFileName) == aiReturn_SUCCESS)
 	{
-		Bindables.push_back(std::make_shared<Texture>(InGraphics, Surface::FromFile(BaseDirectory + TextureFileName.C_Str()), 1));
+		Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str(), 1));
 		bHasSpecularMap = true;
 	}
 	else
@@ -233,20 +233,21 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 		Material.Get(AI_MATKEY_SHININESS, Shininess);
 	}
 
-	Bindables.push_back(std::make_shared<Sampler>(InGraphics));
+	Bindables.push_back(Sampler::Resolve(InGraphics));
 
-	Bindables.push_back(std::make_shared<VertexBuffer>(InGraphics, ModelVertexBuffer));
-	Bindables.push_back(std::make_shared<IndexBuffer>(InGraphics, Indices));
+	const auto MeshTag = BaseDirectory + "$" + InMesh.mName.C_Str();
+	Bindables.push_back(VertexBuffer::Resolve(InGraphics, MeshTag, ModelVertexBuffer));
+	Bindables.push_back(IndexBuffer::Resolve(InGraphics, MeshTag, Indices));
 
-	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, L"PhongVS.cso");
+	auto ModelVertexShader = VertexShader::Resolve(InGraphics, "PhongVS.cso");
 	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
 	Bindables.push_back(std::move(ModelVertexShader));
 
-	Bindables.push_back(std::make_shared<InputLayout>(InGraphics, ModelVertexBuffer.GetLayout().GetD3D11Layout(), ModelVertexShaderBlob));
+	Bindables.push_back(InputLayout::Resolve(InGraphics, ModelVertexBuffer.GetLayout(), ModelVertexShaderBlob));
 
 	if (!bHasSpecularMap)
 	{
-		Bindables.push_back(std::make_shared<PixelShader>(InGraphics, L"PhongPS.cso"));
+		Bindables.push_back(PixelShader::Resolve(InGraphics, "PhongPS.cso"));
 
 		struct PSMaterialConstants
 		{
@@ -256,11 +257,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 		} MaterialConstants;
 
 		MaterialConstants.SpecularPower = Shininess;
-		Bindables.push_back(std::make_shared<PixelConstantBuffer<PSMaterialConstants>>(InGraphics, MaterialConstants, 1u));	
+		Bindables.push_back(PixelConstantBuffer<PSMaterialConstants>::Resolve(InGraphics, MaterialConstants, 1u));	
 	}
 	else
 	{
-		Bindables.push_back(std::make_shared<PixelShader>(InGraphics, L"SpecularMapPhongPS.cso"));
+		Bindables.push_back(PixelShader::Resolve(InGraphics, "SpecularMapPhongPS.cso"));
 	}
 
 	struct PSCameraConstants
@@ -269,7 +270,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	} CameraConstants;
 
 	CameraConstants.Position = InGraphics.GetCamera().GetPosition();
-	Bindables.push_back(std::make_shared<PixelConstantBuffer<PSCameraConstants>>(InGraphics, CameraConstants, bHasSpecularMap ? 1u : 2u));
+	Bindables.push_back(PixelConstantBuffer<PSCameraConstants>::Resolve(InGraphics, CameraConstants, bHasSpecularMap ? 1u : 2u));
 
 	return std::make_unique<Mesh>(InGraphics, std::move(Bindables));
 }

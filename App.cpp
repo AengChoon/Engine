@@ -31,10 +31,9 @@ void App::DoFrame()
 	MyWindow.GetGraphics().BeginFrame();
 
 	if (!Nano) { Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj"); }
+	if (!Nano2) { Nano2 = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj"); }
 
 	MyPointLight.Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
-	Nano->ShowWindow();
-	Nano->Draw(MyWindow.GetGraphics());
 
 	while (const auto Event = MyWindow.MyKeyboard.ReadKey())
 	{
@@ -89,8 +88,13 @@ void App::DoFrame()
 		}
 	}
 
-	MyPointLight.ShowControlWindow();
+	Nano->ShowWindow("Model 1");
+	Nano2->ShowWindow("Model 2");
+	Nano->Draw(MyWindow.GetGraphics());
+	Nano2->Draw(MyWindow.GetGraphics());
 	MyPointLight.Draw(MyWindow.GetGraphics());
+
+	MyPointLight.ShowControlWindow();
 	MyCamera.ShowControlWindow();
 	MyWindow.GetGraphics().EndFrame();
 }

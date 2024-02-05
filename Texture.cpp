@@ -1,15 +1,19 @@
 ﻿#include "Texture.h"
+#include "BindManager.h"
 #include "ExceptionMacros.h"
 #include "Surface.h"
 
-Texture::Texture(const Graphics& InGraphics, const Surface& InSurface, unsigned int InSlot)
-	: Slot(InSlot)
+Texture::Texture(const Graphics& InGraphics, const std::string& InFileName, unsigned int InSlot)
+	: FileName(InFileName)
+	, Slot(InSlot)
 {
 	HRESULT ResultHandle;
 
+	const auto Surface = Surface::FromFile(InFileName);
+
 	D3D11_TEXTURE2D_DESC Texture2DDesc = {};
-	Texture2DDesc.Width = InSurface.GetWidth();
-	Texture2DDesc.Height = InSurface.GetHeight();
+	Texture2DDesc.Width = Surface.GetWidth();
+	Texture2DDesc.Height = Surface.GetHeight();
 	Texture2DDesc.MipLevels = 1;
 	Texture2DDesc.ArraySize = 1;
 	Texture2DDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -21,8 +25,8 @@ Texture::Texture(const Graphics& InGraphics, const Surface& InSurface, unsigned 
 	Texture2DDesc.MiscFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA SubresourceData = {};
-	SubresourceData.pSysMem = InSurface.GetBufferPtrConst();
-	SubresourceData.SysMemPitch = InSurface.GetWidth() * sizeof(Surface::Color);
+	SubresourceData.pSysMem = Surface.GetBufferPtrConst();
+	SubresourceData.SysMemPitch = Surface.GetWidth() * sizeof(Surface::Color);
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> Texture2D;
 	CHECK_HRESULT_EXCEPTION(GetDevice(InGraphics)->CreateTexture2D
@@ -48,4 +52,20 @@ Texture::Texture(const Graphics& InGraphics, const Surface& InSurface, unsigned 
 void Texture::Bind(const Graphics& InGraphics) noexcept
 {
 	GetContext(InGraphics)->PSSetShaderResources(Slot, 1u, MyTextureView.GetAddressOf());
+}
+
+std::shared_ptr<Texture> Texture::Resolve(const Graphics& InGraphics, const std::string& InFileName, unsigned InSlot)
+{
+	return BindManager::Resolve<Texture>(InGraphics, InFileName, InSlot);
+}
+
+std::string Texture::GenerateUniqueID(const std::string& InFileName, unsigned InSlot)
+{
+	using namespace std::string_literals;
+	return typeid(Texture).name() + "#"s + std::to_string(InSlot) + "#"s + InFileName ;
+}
+
+std::string Texture::GetUniqueID() const noexcept
+{
+	return GenerateUniqueID(FileName, Slot);
 }

@@ -2,7 +2,7 @@
 #include "Sphere.h"
 #include "Bindables.h"
 
-SolidSphere::SolidSphere(Graphics& InGraphics, float InRadius)
+SolidSphere::SolidSphere(Graphics& InGraphics, const float InRadius)
 {
 	struct Vertex
 	{
@@ -12,15 +12,17 @@ SolidSphere::SolidSphere(Graphics& InGraphics, float InRadius)
 	auto Model = Sphere::Make();
 	Model.Transform(DirectX::XMMatrixScaling(InRadius, InRadius, InRadius));
 
-	Bind(std::make_shared<VertexBuffer>(InGraphics, Model.Vertices));
+	const auto GeometryTag = "$sphere." + std::to_string(InRadius);
 
-	Bind(std::make_shared<IndexBuffer>(InGraphics, Model.Indices));
+	Bind(VertexBuffer::Resolve(InGraphics, GeometryTag, Model.Vertices));
 
-	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, L"SolidVS.cso");
+	Bind(IndexBuffer::Resolve(InGraphics, GeometryTag, Model.Indices));
+
+	auto ModelVertexShader = VertexShader::Resolve(InGraphics, "SolidVS.cso");
 	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
-	Bind(std::move( ModelVertexShader ));
+	Bind(std::move(ModelVertexShader));
 
-	Bind(std::make_shared<PixelShader>(InGraphics, L"SolidPS.cso"));
+	Bind(PixelShader::Resolve(InGraphics, "SolidPS.cso"));
 
 	struct PSColorConstants
 	{
@@ -28,24 +30,11 @@ SolidSphere::SolidSphere(Graphics& InGraphics, float InRadius)
 		float padding;
 	} ModelColorConstants;
 
-	Bind(std::make_shared<PixelConstantBuffer<PSColorConstants>>(InGraphics, ModelColorConstants));
+	Bind(PixelConstantBuffer<PSColorConstants>::Resolve(InGraphics, ModelColorConstants));
 
-	const std::vector<D3D11_INPUT_ELEMENT_DESC> ModelInputElementDescs =
-	{
-		{
-			"Position",
-			0,
-			DXGI_FORMAT_R32G32B32_FLOAT,
-			0,
-			0,
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
-		}
-	};
+	Bind(InputLayout::Resolve(InGraphics, Model.Vertices.GetLayout(), ModelVertexShaderBlob));
 
-	Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
-
-	Bind(std::make_shared<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	Bind(Topology::Resolve(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
 	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
 }

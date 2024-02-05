@@ -1,75 +1,31 @@
 ﻿#pragma once
+#include <memory>
 #include "Bindable.h"
 #include "DynamicVertex.h"
-#include "ExceptionMacros.h"
 
 class VertexBuffer : public Bindable
 {
 public:
-	template<class T>
-	VertexBuffer(const Graphics& InGraphics, const std::vector<T>& InVertices)
-		: Stride(sizeof(T))
+	VertexBuffer(const Graphics& InGraphics, const DV::VertexBuffer& InVertices);
+	VertexBuffer(const Graphics& InGraphics, const std::string& InTag,  const DV::VertexBuffer& InVertices);
+
+	void Bind(const Graphics& InGraphics) noexcept override;
+
+	[[nodiscard]] static std::shared_ptr<VertexBuffer> Resolve(const Graphics& InGraphics, const std::string& InTag, const DV::VertexBuffer& InVertices);
+
+	template<typename... IgnoredParams>
+	[[nodiscard]] static std::string GenerateUniqueID(const std::string& InTag, IgnoredParams&&... InIgnoredParams)
 	{
-		HRESULT ResultHandle;
-
-		D3D11_BUFFER_DESC VertexBufferDesc {};
-		VertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		VertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		VertexBufferDesc.CPUAccessFlags = 0u;
-		VertexBufferDesc.MiscFlags = 0u;
-		VertexBufferDesc.ByteWidth = static_cast<UINT>(sizeof(T) * InVertices.size());
-		VertexBufferDesc.StructureByteStride = sizeof(T);
-
-		D3D11_SUBRESOURCE_DATA SubresourceData = {};
-		SubresourceData.pSysMem = InVertices.data();
-
-		CHECK_HRESULT_EXCEPTION(GetDevice(InGraphics)->CreateBuffer
-		(
-			&VertexBufferDesc,
-			&SubresourceData,
-			&MyVertexBuffer
-		))
+		return GenerateUniqueIDImpl(InTag);
 	}
 
-	VertexBuffer(const Graphics& InGraphics, const DV::VertexBuffer& InDVBuffer)
-		: Stride(static_cast<UINT>(InDVBuffer.GetLayout().ByteSize()))
-	{
-		HRESULT ResultHandle;
+	[[nodiscard]] std::string GetUniqueID() const noexcept override;
 
-		D3D11_BUFFER_DESC VertexBufferDesc {};
-		VertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		VertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		VertexBufferDesc.CPUAccessFlags = 0u;
-		VertexBufferDesc.MiscFlags = 0u;
-		VertexBufferDesc.ByteWidth = static_cast<UINT>(InDVBuffer.Size());
-		VertexBufferDesc.StructureByteStride = Stride;
-
-		D3D11_SUBRESOURCE_DATA SubresourceData = {};
-		SubresourceData.pSysMem = InDVBuffer.GetData();
-
-		CHECK_HRESULT_EXCEPTION(GetDevice(InGraphics)->CreateBuffer
-		(
-			&VertexBufferDesc,
-			&SubresourceData,
-			&MyVertexBuffer
-		))
-	}
-
-	void Bind(const Graphics& InGraphics) noexcept override
-	{
-		constexpr UINT Offset = 0u;
-
-		GetContext(InGraphics)->IASetVertexBuffers
-		(
-			0u,
-			1u,
-			MyVertexBuffer.GetAddressOf(),
-			&Stride,
-			&Offset
-		);
-	}
+private:
+	[[nodiscard]] static std::string GenerateUniqueIDImpl(const std::string& InTag);
 
 protected:
+	std::string Tag;
 	UINT Stride;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> MyVertexBuffer;
 };

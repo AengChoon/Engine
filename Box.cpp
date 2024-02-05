@@ -18,11 +18,11 @@ Box::Box(const Graphics& InGraphics, const DirectX::XMFLOAT3 InMaterialColor)
 
 	Bind(std::make_shared<IndexBuffer>(InGraphics, Model.Indices));
 
-	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, L"PhongVS.cso");
+	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, "PhongVS.cso");
 	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
 	Bind(std::move(ModelVertexShader));
 
-	Bind(std::make_shared<PixelShader>(InGraphics, L"PhongPS.cso"));
+	Bind(std::make_shared<PixelShader>(InGraphics, "PhongPS.cso"));
 
 	struct PSMaterialConstants
 	{
@@ -63,9 +63,9 @@ Box::Box(const Graphics& InGraphics, const DirectX::XMFLOAT3 InMaterialColor)
 		}
 	};
 
-	Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
+	// Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
 
-	Bind(std::make_shared<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	Bind(std::make_shared<Topology>(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
 	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
 }

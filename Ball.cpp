@@ -23,11 +23,11 @@ Ball::Ball(Graphics& InGraphics, std::mt19937& InRandomGenerator, std::uniform_r
 
 	Bind(std::make_shared<IndexBuffer>(InGraphics, Model.Indices));
 
-	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, L"ColorIndexVS.cso");
+	auto ModelVertexShader = std::make_shared<VertexShader>(InGraphics, "ColorIndexVS.cso");
 	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
 	Bind(std::move(ModelVertexShader));
 
-	Bind(std::make_shared<PixelShader>(InGraphics, L"ColorIndexPS.cso"));
+	Bind(std::make_shared<PixelShader>(InGraphics, "ColorIndexPS.cso"));
 
 	struct PSColorConstants
 	{
@@ -69,9 +69,9 @@ Ball::Ball(Graphics& InGraphics, std::mt19937& InRandomGenerator, std::uniform_r
 		}
 	};
 
-	Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
+	// Bind(std::make_shared<InputLayout>(InGraphics, ModelInputElementDescs, ModelVertexShaderBlob));
 
-	Bind(std::make_shared<Topology>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	Bind(std::make_shared<Topology>(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
 	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
 }
