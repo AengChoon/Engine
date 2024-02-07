@@ -1,7 +1,7 @@
 ﻿#include "PointLight.h"
 #include "imgui/imgui.h"
 
-PointLight::PointLight(Graphics& InGraphics, float InRadius)
+PointLight::PointLight(Graphics& InGraphics, const float InRadius)
 	: Mesh(InGraphics, InRadius), ConstantBuffer(InGraphics)
 {
 	Reset();
@@ -12,21 +12,21 @@ void PointLight::ShowControlWindow() noexcept
 	if (ImGui::Begin("Light"))
 	{
 		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &ConstantBufferData.Position.x, -60.0f, 60.0f, "%.1f");
-		ImGui::SliderFloat("Y", &ConstantBufferData.Position.y, -60.0f, 60.0f, "%.1f");
-		ImGui::SliderFloat("Z", &ConstantBufferData.Position.z, -60.0f, 60.0f, "%.1f");
+		ImGui::SliderFloat("X", &Constants.Position.x, -60.0f, 60.0f, "%.1f");
+		ImGui::SliderFloat("Y", &Constants.Position.y, -60.0f, 60.0f, "%.1f");
+		ImGui::SliderFloat("Z", &Constants.Position.z, -60.0f, 60.0f, "%.1f");
 
 		ImGui::Text("Diffuse");
-		ImGui::SliderFloat("Strength", &ConstantBufferData.DiffuseStrength, -60.0f, 60.0f, "%.1f");
-		ImGui::ColorEdit3("Color", &ConstantBufferData.DiffuseColor.x);
+		ImGui::SliderFloat("Strength", &Constants.DiffuseStrength, -60.0f, 60.0f, "%.1f");
+		ImGui::ColorEdit3("Color", &Constants.DiffuseColor.x);
 
 		ImGui::Text("Ambient");
-		ImGui::ColorEdit3("Color", &ConstantBufferData.AmbientColor.x);
+		ImGui::ColorEdit3("Color", &Constants.AmbientColor.x);
 
 		ImGui::Text("Falloff");
-		ImGui::SliderFloat("Quadratic", &ConstantBufferData.QuadraticAttenuation, 0.0f, 10.0f, "%.2f");
-		ImGui::SliderFloat("Linear", &ConstantBufferData.LinearAttenuation, 0.0001f, 4.0f, "%.4f");
-		ImGui::SliderFloat("Constant", &ConstantBufferData.ConstantAttenuation, 0.0000001f, 10.0f, "%.7f");
+		ImGui::SliderFloat("Quadratic", &Constants.QuadraticAttenuation, 0.0f, 10.0f, "%.2f");
+		ImGui::SliderFloat("Linear", &Constants.LinearAttenuation, 0.0001f, 4.0f, "%.4f");
+		ImGui::SliderFloat("Constant", &Constants.ConstantAttenuation, 0.0000001f, 10.0f, "%.7f");
 
 		if (ImGui::Button("Reset"))
 		{
@@ -39,7 +39,7 @@ void PointLight::ShowControlWindow() noexcept
 
 void PointLight::Reset() noexcept
 {
-	ConstantBufferData =
+	Constants =
 	{
 		{1.5f, 14.0f, -4.5f},
 		{0.05f, 0.05f, 0.05f},
@@ -53,12 +53,12 @@ void PointLight::Reset() noexcept
 
 void PointLight::Draw(const Graphics& InGraphics) const
 {
-	Mesh.SetPosition(ConstantBufferData.Position);
+	Mesh.SetPosition(Constants.Position);
 	Mesh.Draw(InGraphics);
 }
 
 void PointLight::Bind(const Graphics& InGraphics, const DirectX::FXMMATRIX& InViewMatrix) const noexcept
 {	
-	ConstantBuffer.Update(InGraphics, ConstantBufferData);
+	ConstantBuffer.Update(InGraphics, Constants);
 	ConstantBuffer.Bind(InGraphics);
 }

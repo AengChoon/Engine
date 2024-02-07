@@ -5,10 +5,13 @@ GDIPlusManager GDIPlus;
 
 App::App()
 	: MyWindow(1280, 720, WindowClass::GetName())
-	, MyPointLight(MyWindow.GetGraphics())
 {
 	MyWindow.GetGraphics().SetCamera(MyCamera);
 	MyWindow.GetGraphics().SetProjectionMatrix(DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
+
+	Light = std::make_unique<PointLight>(MyWindow.GetGraphics());
+	Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj");
+	Nano2 = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj");
 }
 
 int App::Run()
@@ -30,10 +33,16 @@ void App::DoFrame()
 
 	MyWindow.GetGraphics().BeginFrame();
 
-	if (!Nano) { Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj"); }
-	if (!Nano2) { Nano2 = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj"); }
+	Light->Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
 
-	MyPointLight.Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
+	Nano->Draw(MyWindow.GetGraphics());
+	Nano2->Draw(MyWindow.GetGraphics());
+	Light->Draw(MyWindow.GetGraphics());
+
+	MyCamera.ShowControlWindow();
+	Light->ShowControlWindow();
+	Nano->ShowWindow("Model 1");
+	Nano2->ShowWindow("Model 2");
 
 	while (const auto Event = MyWindow.MyKeyboard.ReadKey())
 	{
@@ -88,13 +97,5 @@ void App::DoFrame()
 		}
 	}
 
-	Nano->ShowWindow("Model 1");
-	Nano2->ShowWindow("Model 2");
-	Nano->Draw(MyWindow.GetGraphics());
-	Nano2->Draw(MyWindow.GetGraphics());
-	MyPointLight.Draw(MyWindow.GetGraphics());
-
-	MyPointLight.ShowControlWindow();
-	MyCamera.ShowControlWindow();
 	MyWindow.GetGraphics().EndFrame();
 }

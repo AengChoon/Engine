@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include "Bindables.h"
 #include "Camera.h"
+#include "PointLight.h"
 #include "Surface.h"
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
@@ -79,7 +80,12 @@ void Node::ShowTree(const Node** InSelectedNode) const
 							   (IsCurrentNodeSelected ? ImGuiTreeNodeFlags_Selected : 0) |
 							   (IsCurrentNodeLeaf ? ImGuiTreeNodeFlags_Leaf : 0);
 
-	const auto IsExpanded = ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(GetID())), NodeFlags, Name.c_str());
+	const auto IsExpanded = ImGui::TreeNodeEx
+								 (
+									reinterpret_cast<void*>(static_cast<intptr_t>(GetID())),
+									NodeFlags,
+									Name.c_str()
+								 );
 
 	if (ImGui::IsItemClicked())
 	{
@@ -102,7 +108,9 @@ class ModelWindow
 public:
 	ModelWindow(const int InDefaultSelectedNodeIndex, Node* InDefaultSelectedNode)
 		: SelectedNodeIndex(InDefaultSelectedNodeIndex), SelectedNode(InDefaultSelectedNode)
-	{}
+	{
+		NodeTransforms[SelectedNode->GetID()] = {};
+	}
 
 	void Show(const std::string_view InWindowName, const Node& InRoot) noexcept
 	{

@@ -21,8 +21,8 @@ private:
 	Window MyWindow;
 	EngineTimer MyTimer;
 	Camera MyCamera;
-	PointLight MyPointLight;
 	float SpeedFactor {1.0f};
+	std::unique_ptr<PointLight> Light;
 	std::unique_ptr<Model> Nano;
 	std::unique_ptr<Model> Nano2;
 };
