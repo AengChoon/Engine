@@ -1,6 +1,7 @@
 ﻿#include "Ball.h"
 #include "Sphere.h"
 #include "Bindables.h"
+#include "TransformConstantBuffer.h"
 
 Ball::Ball(Graphics& InGraphics, std::mt19937& InRandomGenerator, std::uniform_real_distribution<float>& InA,
            std::uniform_real_distribution<float>& InB, std::uniform_real_distribution<float>& InC,
@@ -73,7 +74,7 @@ Ball::Ball(Graphics& InGraphics, std::mt19937& InRandomGenerator, std::uniform_r
 
 	Bind(std::make_shared<Topology>(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
-	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
+	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this, TransformConstantBuffer::Target::Vertex));
 }
 
 DirectX::XMMATRIX Ball::GetTransformMatrix() const noexcept

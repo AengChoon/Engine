@@ -36,7 +36,7 @@ SolidSphere::SolidSphere(Graphics& InGraphics, const float InRadius)
 
 	Bind(Topology::Resolve(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
-	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
+	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this, TransformConstantBuffer::Target::Vertex));
 }
 
 DirectX::XMMATRIX SolidSphere::GetTransformMatrix() const noexcept

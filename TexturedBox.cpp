@@ -58,7 +58,7 @@ TexturedBox::TexturedBox(const Graphics& InGraphics)
 
 	Bind(std::make_shared<Topology>(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
-	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
+	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this, TransformConstantBuffer::Target::Vertex));
 }
 
 DirectX::XMMATRIX TexturedBox::GetTransformMatrix() const noexcept

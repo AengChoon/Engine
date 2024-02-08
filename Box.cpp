@@ -67,7 +67,7 @@ Box::Box(const Graphics& InGraphics, const DirectX::XMFLOAT3 InMaterialColor)
 
 	Bind(std::make_shared<Topology>(InGraphics, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
-	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this));
+	Bind(std::make_shared<TransformConstantBuffer>(InGraphics, *this, TransformConstantBuffer::Target::Vertex));
 }
 
 DirectX::XMMATRIX Box::GetTransformMatrix() const noexcept

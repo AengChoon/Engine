@@ -18,7 +18,7 @@ Mesh::Mesh(const Graphics& InGraphics, std::vector<std::shared_ptr<Bindable>>&& 
 		Bind(std::move(Bindable));
 	}
 
-	Bind(std::make_unique<TransformConstantBuffer>(InGraphics, *this));
+	Bind(std::make_unique<TransformConstantBuffer>(InGraphics, *this, TransformConstantBuffer::Target::Vertex));
 }
 
 void Mesh::Draw(const Graphics& InGraphics, const DirectX::XMMATRIX& InAccumulatedTransform) const
