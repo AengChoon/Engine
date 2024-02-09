@@ -23,6 +23,8 @@ namespace DV
 			Position3D,
 			Texture2D,
 			Normal,
+			Tangent,
+			Bitangent,
 			Float3Color,
 			Float4Color,
 			BGRAColor
@@ -60,6 +62,22 @@ namespace DV
 			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 			static constexpr const char* Semantic = "Normal";
 			static constexpr const char* Code = "N";
+		};
+
+		template<> struct TypeMap<ElementType::Tangent>
+		{
+			using SystemType = DirectX::XMFLOAT3;
+			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			static constexpr const char* Semantic = "Tangent";
+			static constexpr const char* Code = "Nt";
+		};
+
+		template<> struct TypeMap<ElementType::Bitangent>
+		{
+			using SystemType = DirectX::XMFLOAT3;
+			static constexpr DXGI_FORMAT DxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			static constexpr const char* Semantic = "Bitangent";
+			static constexpr const char* Code = "Nbt";
 		};
 
 		template<> struct TypeMap<ElementType::Float3Color>
@@ -109,6 +127,10 @@ namespace DV
 					return GenerateDesc<ElementType::Texture2D>(GetByteOffset());
 				case ElementType::Normal:
 					return GenerateDesc<ElementType::Normal>(GetByteOffset());
+				case ElementType::Tangent:
+					return GenerateDesc<ElementType::Tangent>(GetByteOffset());
+				case ElementType::Bitangent:
+					return GenerateDesc<ElementType::Bitangent>(GetByteOffset());
 				case ElementType::Float3Color:
 					return GenerateDesc<ElementType::Float3Color>(GetByteOffset());;
 				case ElementType::Float4Color:
@@ -143,6 +165,10 @@ namespace DV
 					return TypeMap<ElementType::Texture2D>::Code;
 				case ElementType::Normal:	
 					return TypeMap<ElementType::Normal>::Code;
+				case ElementType::Tangent:	
+					return TypeMap<ElementType::Tangent>::Code;
+				case ElementType::Bitangent:	
+					return TypeMap<ElementType::Bitangent>::Code;
 				case ElementType::Float3Color:
 					return TypeMap<ElementType::Float3Color>::Code;
 				case ElementType::Float4Color:	
@@ -172,6 +198,10 @@ namespace DV
 					return sizeof(TypeMap<ElementType::Texture2D>::SystemType);
 				case ElementType::Normal:
 					return sizeof(TypeMap<ElementType::Normal>::SystemType);
+				case ElementType::Tangent:
+					return sizeof(TypeMap<ElementType::Tangent>::SystemType);
+				case ElementType::Bitangent:
+					return sizeof(TypeMap<ElementType::Bitangent>::SystemType);
 				case ElementType::Float3Color:
 					return sizeof(TypeMap<ElementType::Float3Color>::SystemType);
 				case ElementType::Float4Color:
@@ -314,6 +344,12 @@ namespace DV
 				break;
 			case VertexLayout::ElementType::Normal:
 				SetAttribute<VertexLayout::ElementType::Normal>(Attribute, std::forward<T>(InValue));
+				break;
+			case VertexLayout::ElementType::Tangent:
+				SetAttribute<VertexLayout::ElementType::Tangent>(Attribute, std::forward<T>(InValue));
+				break;
+			case VertexLayout::ElementType::Bitangent:
+				SetAttribute<VertexLayout::ElementType::Bitangent>(Attribute, std::forward<T>(InValue));
 				break;
 			case VertexLayout::ElementType::Float3Color:
 				SetAttribute<VertexLayout::ElementType::Float3Color>(Attribute, std::forward<T>(InValue));
