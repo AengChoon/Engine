@@ -171,7 +171,15 @@ private:
 Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
 {
 	Assimp::Importer Importer;
-	const auto* Scene = Importer.ReadFile(InFileName.data(), aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+	const auto* Scene = Importer.ReadFile
+	(
+		InFileName.data(),
+		aiProcess_Triangulate |
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_ConvertToLeftHanded |
+		aiProcess_GenNormals |
+		aiProcess_CalcTangentSpace
+	);
 
 	for (size_t MeshIndex = 0; MeshIndex < Scene->mNumMeshes; ++MeshIndex)
 	{
@@ -187,53 +195,32 @@ Model::~Model() = default;
 
 std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh, aiMaterial const* const* InMaterials)
 {
-	DV::VertexBuffer ModelVertexBuffer
-	{
-		{
-			DV::VertexLayout::ElementType::Position3D,
-			DV::VertexLayout::ElementType::Normal,
-			DV::VertexLayout::ElementType::Texture2D
-		}
-	};
-
-	for (unsigned int VertexIndex = 0; VertexIndex < InMesh.mNumVertices; ++VertexIndex)
-	{
-		ModelVertexBuffer.Emplace
-		(
-			*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mVertices[VertexIndex]),
-			*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mNormals[VertexIndex]),
-			*reinterpret_cast<DirectX::XMFLOAT2*>(&InMesh.mTextureCoords[0][VertexIndex])
-		);
-	}
-
-	std::vector<unsigned int> Indices;
-	Indices.reserve(InMesh.mNumFaces * 3);
-	for (unsigned int FaceIndex = 0; FaceIndex < InMesh.mNumFaces; ++FaceIndex)
-	{
-		const auto& Face = InMesh.mFaces[FaceIndex];
-		assert(Face.mNumIndices == 3);
-
-		for (unsigned int Index = 0; Index < Face.mNumIndices; ++Index)
-		{
-			Indices.push_back(Face.mIndices[Index]);
-		}
-	}
+	const std::string& BaseDirectory {R"(Models\nanosuit_textured\)"};
 
 	std::vector<std::shared_ptr<Bindable>> Bindables;
+	bool bHasDiffuseMap {false};
+	bool bHasNormalMap {false};
+	bool bHasSpecularMap {false};
+	float Shininess {35.0f};
 
 	auto& Material = *InMaterials[InMesh.mMaterialIndex];
-	using namespace std::string_literals;
-	const auto BaseDirectory = "Models\\nanosuit_textured\\"s;
 	aiString TextureFileName;
 
-	Material.GetTexture(aiTextureType_DIFFUSE, 0, &TextureFileName);
-	Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str()));
+	if (Material.GetTexture(aiTextureType_DIFFUSE, 0, &TextureFileName) == aiReturn_SUCCESS)
+	{
+		Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str()));
+		bHasDiffuseMap = true;
+	}
 
-	bool bHasSpecularMap {false};
-	float Shininess = 35.0f;
-	if (Material.GetTexture(aiTextureType_SPECULAR, 0, &TextureFileName) == aiReturn_SUCCESS)
+	if (Material.GetTexture(aiTextureType_NORMALS, 0, &TextureFileName) == aiReturn_SUCCESS)
 	{
 		Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str(), 1));
+		bHasNormalMap = true;
+	}
+
+	if (Material.GetTexture(aiTextureType_SPECULAR, 0, &TextureFileName) == aiReturn_SUCCESS)
+	{
+		Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str(), 2));
 		bHasSpecularMap = true;
 	}
 	else
@@ -241,44 +228,293 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 		Material.Get(AI_MATKEY_SHININESS, Shininess);
 	}
 
-	Bindables.push_back(Sampler::Resolve(InGraphics));
-
-	const auto MeshTag = BaseDirectory + "$" + InMesh.mName.C_Str();
-	Bindables.push_back(VertexBuffer::Resolve(InGraphics, MeshTag, ModelVertexBuffer));
-	Bindables.push_back(IndexBuffer::Resolve(InGraphics, MeshTag, Indices));
-
-	auto ModelVertexShader = VertexShader::Resolve(InGraphics, "PhongVS.cso");
-	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
-	Bindables.push_back(std::move(ModelVertexShader));
-
-	Bindables.push_back(InputLayout::Resolve(InGraphics, ModelVertexBuffer.GetLayout(), ModelVertexShaderBlob));
-
-	if (!bHasSpecularMap)
+	if (bHasDiffuseMap || bHasNormalMap || bHasSpecularMap)
 	{
+		Bindables.push_back(Sampler::Resolve(InGraphics));
+	}
+
+	const auto MeshTag {BaseDirectory + "$" + InMesh.mName.C_Str()};
+	constexpr float Scale {0.6f};
+
+	if (bHasDiffuseMap && bHasNormalMap && bHasSpecularMap)
+	{
+		DV::VertexBuffer ModelVertexBuffer
+		{
+			{
+				DV::VertexLayout::ElementType::Position3D,
+				DV::VertexLayout::ElementType::Normal,
+				DV::VertexLayout::ElementType::Tangent,
+				DV::VertexLayout::ElementType::Bitangent,
+				DV::VertexLayout::ElementType::Texture2D
+			}
+		};
+
+		for (unsigned int VertexIndex = 0; VertexIndex < InMesh.mNumVertices; ++VertexIndex)
+		{
+			ModelVertexBuffer.Emplace
+			(
+				DirectX::XMFLOAT3
+				{
+					InMesh.mVertices[VertexIndex].x * Scale,
+					InMesh.mVertices[VertexIndex].y * Scale,
+					InMesh.mVertices[VertexIndex].z * Scale,
+				},
+				*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mNormals[VertexIndex]),
+				*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mTangents[VertexIndex]),
+				*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mBitangents[VertexIndex]),
+				*reinterpret_cast<DirectX::XMFLOAT2*>(&InMesh.mTextureCoords[0][VertexIndex])
+			);
+		}
+
+		std::vector<unsigned int> Indices;
+		Indices.reserve(InMesh.mNumFaces * 3);
+		for (unsigned int FaceIndex = 0; FaceIndex < InMesh.mNumFaces; ++FaceIndex)
+		{
+			const auto& Face = InMesh.mFaces[FaceIndex];
+			assert(Face.mNumIndices == 3);
+
+			for (unsigned int Index = 0; Index < Face.mNumIndices; ++Index)
+			{
+				Indices.push_back(Face.mIndices[Index]);
+			}
+		}
+
+		Bindables.push_back(VertexBuffer::Resolve(InGraphics, MeshTag, ModelVertexBuffer));
+		Bindables.push_back(IndexBuffer::Resolve(InGraphics, MeshTag, Indices));
+
+		auto ModelVertexShader = VertexShader::Resolve(InGraphics, "DiffuseNormalPhongVS.cso");
+		auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
+		Bindables.push_back(std::move(ModelVertexShader));
+
+		Bindables.push_back(PixelShader::Resolve(InGraphics, "DiffuseNormalSpecularPhongPS.cso"));
+
+		struct PSDiffuseNormalSpecularConstants
+		{
+			BOOL bIsNormalMapEnabled {TRUE};
+			float Padding[3];
+		} DiffuseNormalSpecularConstants;
+
+		Bindables.push_back(PixelConstantBuffer<PSDiffuseNormalSpecularConstants>::Resolve(InGraphics, DiffuseNormalSpecularConstants, 1u));
+
+		struct PSCameraConstants
+		{
+			alignas(16) DirectX::XMFLOAT3 Position;
+		} CameraConstants;
+		CameraConstants.Position = InGraphics.GetCamera().GetPosition();
+
+		Bindables.push_back(PixelConstantBuffer<PSCameraConstants>::Resolve(InGraphics, CameraConstants, 2u));
+
+		Bindables.push_back(InputLayout::Resolve(InGraphics, ModelVertexBuffer.GetLayout(), ModelVertexShaderBlob));
+	}
+	else if (bHasDiffuseMap && bHasNormalMap)
+	{
+		DV::VertexBuffer ModelVertexBuffer
+		{
+			{
+				DV::VertexLayout::ElementType::Position3D,
+				DV::VertexLayout::ElementType::Normal,
+				DV::VertexLayout::ElementType::Tangent,
+				DV::VertexLayout::ElementType::Bitangent,
+				DV::VertexLayout::ElementType::Texture2D
+			}
+		};
+
+		for (unsigned int VertexIndex = 0; VertexIndex < InMesh.mNumVertices; ++VertexIndex)
+		{
+			ModelVertexBuffer.Emplace
+			(
+				DirectX::XMFLOAT3
+				{
+					InMesh.mVertices[VertexIndex].x * Scale,
+					InMesh.mVertices[VertexIndex].y * Scale,
+					InMesh.mVertices[VertexIndex].z * Scale,
+				},
+				*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mNormals[VertexIndex]),
+				*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mTangents[VertexIndex]),
+				*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mBitangents[VertexIndex]),
+				*reinterpret_cast<DirectX::XMFLOAT2*>(&InMesh.mTextureCoords[0][VertexIndex])
+			);
+		}
+
+		std::vector<unsigned int> Indices;
+		Indices.reserve(InMesh.mNumFaces * 3);
+		for (unsigned int FaceIndex = 0; FaceIndex < InMesh.mNumFaces; ++FaceIndex)
+		{
+			const auto& Face = InMesh.mFaces[FaceIndex];
+			assert(Face.mNumIndices == 3);
+
+			for (unsigned int Index = 0; Index < Face.mNumIndices; ++Index)
+			{
+				Indices.push_back(Face.mIndices[Index]);
+			}
+		}
+
+		Bindables.push_back(VertexBuffer::Resolve(InGraphics, MeshTag, ModelVertexBuffer));
+
+		Bindables.push_back(IndexBuffer::Resolve(InGraphics, MeshTag, Indices));
+
+		auto ModelVertexShader = VertexShader::Resolve(InGraphics, "DiffuseNormalPhongVS.cso");
+		auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
+		Bindables.push_back(std::move(ModelVertexShader));
+
+		Bindables.push_back(PixelShader::Resolve(InGraphics, "DiffuseNormalPhongPS.cso"));
+
+		struct PSDiffuseNormalConstants
+		{
+			float SpecularIntensity {0.18f};
+			float SpecularPower;
+			BOOL bIsNormalMapEnabled {TRUE};
+			float Padding[1];
+		} DiffuseNormalConstants;
+		DiffuseNormalConstants.SpecularPower = Shininess;
+
+		Bindables.push_back(PixelConstantBuffer<PSDiffuseNormalConstants>::Resolve(InGraphics, DiffuseNormalConstants, 1u));
+
+		struct PSCameraConstants
+		{
+			alignas(16) DirectX::XMFLOAT3 Position;
+		} CameraConstants;
+
+		CameraConstants.Position = InGraphics.GetCamera().GetPosition();
+		Bindables.push_back(PixelConstantBuffer<PSCameraConstants>::Resolve(InGraphics, CameraConstants, 2u));
+
+		Bindables.push_back(InputLayout::Resolve(InGraphics, ModelVertexBuffer.GetLayout(), ModelVertexShaderBlob));
+	}
+	else if (bHasDiffuseMap)
+	{
+		DV::VertexBuffer ModelVertexBuffer
+		{
+			{
+				DV::VertexLayout::ElementType::Position3D,
+				DV::VertexLayout::ElementType::Normal,
+				DV::VertexLayout::ElementType::Texture2D
+			}
+		};
+
+		for (unsigned int VertexIndex = 0; VertexIndex < InMesh.mNumVertices; ++VertexIndex)
+		{
+			ModelVertexBuffer.Emplace
+			(
+				DirectX::XMFLOAT3
+				{
+					InMesh.mVertices[VertexIndex].x * Scale,
+					InMesh.mVertices[VertexIndex].y * Scale,
+					InMesh.mVertices[VertexIndex].z * Scale,
+				},
+				*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mNormals[VertexIndex]),
+				*reinterpret_cast<DirectX::XMFLOAT2*>(&InMesh.mTextureCoords[0][VertexIndex])
+			);
+		}
+
+		std::vector<unsigned int> Indices;
+		Indices.reserve(InMesh.mNumFaces * 3);
+		for (unsigned int FaceIndex = 0; FaceIndex < InMesh.mNumFaces; ++FaceIndex)
+		{
+			const auto& Face = InMesh.mFaces[FaceIndex];
+			assert(Face.mNumIndices == 3);
+
+			for (unsigned int Index = 0; Index < Face.mNumIndices; ++Index)
+			{
+				Indices.push_back(Face.mIndices[Index]);
+			}
+		}
+
+		Bindables.push_back(VertexBuffer::Resolve(InGraphics, MeshTag, ModelVertexBuffer));
+		Bindables.push_back(IndexBuffer::Resolve(InGraphics, MeshTag, Indices));
+
+		auto ModelVertexShader = VertexShader::Resolve(InGraphics, "DiffusePhongVS.cso");
+		auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
+		Bindables.push_back(std::move(ModelVertexShader));
+
+		Bindables.push_back(PixelShader::Resolve(InGraphics, "DiffusePhongPS.cso"));
+
+		struct PSDiffuseMaterialConstants
+		{
+			float SpecularIntensity {0.18f};
+			float SpecularPower;
+			float Padding[2];
+		} DiffuseMaterialConstants;
+		DiffuseMaterialConstants.SpecularPower = Shininess;
+
+		Bindables.push_back(PixelConstantBuffer<PSDiffuseMaterialConstants>::Resolve(InGraphics, DiffuseMaterialConstants, 1u));
+
+		struct PSCameraConstants
+		{
+			alignas(16) DirectX::XMFLOAT3 Position;
+		} CameraConstants;
+
+		CameraConstants.Position = InGraphics.GetCamera().GetPosition();
+		Bindables.push_back(PixelConstantBuffer<PSCameraConstants>::Resolve(InGraphics, CameraConstants, 2u));
+
+		Bindables.push_back(InputLayout::Resolve(InGraphics, ModelVertexBuffer.GetLayout(), ModelVertexShaderBlob));
+	}
+	else if (!bHasDiffuseMap && !bHasNormalMap && !bHasSpecularMap)
+	{
+		DV::VertexBuffer ModelVertexBuffer
+		{
+			{
+				DV::VertexLayout::ElementType::Position3D,
+				DV::VertexLayout::ElementType::Normal,
+			}
+		};
+
+		for (unsigned int VertexIndex = 0; VertexIndex < InMesh.mNumVertices; ++VertexIndex)
+		{
+			ModelVertexBuffer.Emplace
+			(
+				DirectX::XMFLOAT3
+				{
+					InMesh.mVertices[VertexIndex].x * Scale,
+					InMesh.mVertices[VertexIndex].y * Scale,
+					InMesh.mVertices[VertexIndex].z * Scale,
+				},
+				*reinterpret_cast<DirectX::XMFLOAT3*>(&InMesh.mNormals[VertexIndex])
+			);
+		}
+
+		std::vector<unsigned int> Indices;
+		Indices.reserve(InMesh.mNumFaces * 3);
+		for (unsigned int FaceIndex = 0; FaceIndex < InMesh.mNumFaces; ++FaceIndex)
+		{
+			const auto& Face = InMesh.mFaces[FaceIndex];
+			assert(Face.mNumIndices == 3);
+
+			for (unsigned int Index = 0; Index < Face.mNumIndices; ++Index)
+			{
+				Indices.push_back(Face.mIndices[Index]);
+			}
+		}
+
+		Bindables.push_back(VertexBuffer::Resolve(InGraphics, MeshTag, ModelVertexBuffer));
+		Bindables.push_back(IndexBuffer::Resolve(InGraphics, MeshTag, Indices));
+
+		auto ModelVertexShader = VertexShader::Resolve(InGraphics, "PhongVS.cso");
+		auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
+		Bindables.push_back(std::move(ModelVertexShader));
+
 		Bindables.push_back(PixelShader::Resolve(InGraphics, "PhongPS.cso"));
 
-		struct PSMaterialConstants
+		struct PSConstants
 		{
-			float SpecularIntensity {0.8f};
+			DirectX::XMFLOAT4 MaterialColor {0.65f, 0.65f, 0.85f, 1.0f};
+			float SpecularIntensity {0.18f};
 			float SpecularPower;
 			float Padding[2];
 		} MaterialConstants;
-
 		MaterialConstants.SpecularPower = Shininess;
-		Bindables.push_back(PixelConstantBuffer<PSMaterialConstants>::Resolve(InGraphics, MaterialConstants, 1u));	
-	}
-	else
-	{
-		Bindables.push_back(PixelShader::Resolve(InGraphics, "SpecularMapPhongPS.cso"));
-	}
 
-	struct PSCameraConstants
-	{
-		alignas(16) DirectX::XMFLOAT3 Position;
-	} CameraConstants;
+		Bindables.push_back(PixelConstantBuffer<PSConstants>::Resolve(InGraphics, MaterialConstants, 1u));
 
-	CameraConstants.Position = InGraphics.GetCamera().GetPosition();
-	Bindables.push_back(PixelConstantBuffer<PSCameraConstants>::Resolve(InGraphics, CameraConstants, bHasSpecularMap ? 1u : 2u));
+		struct PSCameraConstants
+		{
+			alignas(16) DirectX::XMFLOAT3 Position;
+		} CameraConstants;
+
+		CameraConstants.Position = InGraphics.GetCamera().GetPosition();
+		Bindables.push_back(PixelConstantBuffer<PSCameraConstants>::Resolve(InGraphics, CameraConstants, 2u));
+
+		Bindables.push_back(InputLayout::Resolve(InGraphics, ModelVertexBuffer.GetLayout(), ModelVertexShaderBlob));
+	}
 
 	return std::make_unique<Mesh>(InGraphics, std::move(Bindables));
 }

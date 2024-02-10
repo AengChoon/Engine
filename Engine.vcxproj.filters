@@ -567,10 +567,10 @@
     <FxCompile Include="TextureVS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="PhongPS.hlsl">
+    <FxCompile Include="DiffusePhongPS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="PhongVS.hlsl">
+    <FxCompile Include="DiffusePhongVS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="SolidVS.hlsl">
@@ -580,6 +580,21 @@
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="SpecularMapPhongPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="PhongPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="PhongVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="DiffuseNormalPhongVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="DiffuseNormalPhongPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="DiffuseNormalSpecularPhongPS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

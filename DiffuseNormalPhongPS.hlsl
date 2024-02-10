@@ -11,10 +11,10 @@ cbuffer Light
 
 cbuffer Material
 {
-    float3 Color;
     float SpecularIntensity;
     float SpecularPower;
-    float Padding[2];
+    bool bIsNormalMapEnabled;
+    float Padding[1];
 }
 
 cbuffer Camera
@@ -22,8 +22,26 @@ cbuffer Camera
     float3 CameraPosition;
 }
 
-float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Normal) : SV_TARGET
+Texture2D Texture;
+Texture2D NormalMap : register(t2);
+
+SamplerState Sampler;
+
+float4 main(const float3 InWorldPosition : Position,
+			float3 InNormal : Normal,
+			const float3 InTangent : Tangent,
+			const float3 InBitangent : Bitangent,
+            const float2 InTextureCoordinate : TexCoord) : SV_TARGET
 {
+    if (bIsNormalMapEnabled)
+    {
+        const float3x3 TangentToWorld = float3x3(normalize(InTangent), normalize(InBitangent), normalize(InNormal));
+        const float3 NormalSample = NormalMap.Sample(Sampler, InTextureCoordinate).xyz;
+        InNormal = NormalSample * 2.0f - 1.0f;
+        InNormal.y = -InNormal.y;
+        InNormal = mul(InNormal, TangentToWorld);
+    }
+
     const float3 VectorToLight = Position - InWorldPosition;
     const float DistanceToLight = length(VectorToLight);
     const float3 DirectionToLight = VectorToLight / DistanceToLight;
@@ -39,5 +57,5 @@ float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Nor
     const float3 VectorToLightReflected = -VectorToLight + 2.0f * VectorToLightProjectedToNormal;
     const float3 Specular = Attenuation * (DiffuseColor * DiffuseStrength) * SpecularIntensity * pow(max(0.0f, dot(normalize(VectorToLightReflected), normalize(CameraPosition - InWorldPosition))), SpecularPower);
 
-    return float4(saturate((Diffuse + AmbientColor) * Color + Specular), 1.0f);
+    return float4(saturate((Diffuse + AmbientColor) * Texture.Sample(Sampler, InTextureCoordinate).rgb + Specular), 1.0f);
 }
