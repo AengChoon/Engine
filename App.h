@@ -3,6 +3,7 @@
 #include "EngineTimer.h"
 #include "ImguiManager.h"
 #include "Mesh.h"
+#include "Plane.h"
 #include "PointLight.h"
 #include "Window.h"
 
@@ -23,6 +24,7 @@ private:
 	Camera MyCamera;
 	float SpeedFactor {1.0f};
 	std::unique_ptr<PointLight> Light;
-	std::unique_ptr<Model> Nano;
-	std::unique_ptr<Model> Nano2;
+	// std::unique_ptr<Model> Nano;
+	// std::unique_ptr<Model> Nano2;
+	std::unique_ptr<Plane> MyPlane;
 };

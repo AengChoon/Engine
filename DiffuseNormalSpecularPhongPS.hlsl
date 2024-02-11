@@ -37,7 +37,7 @@ float4 main(const float3 InWorldPosition : Position,
         const float3x3 TangentToWorld = float3x3(normalize(InTangent), normalize(InBitangent), normalize(InNormal));
         const float3 NormalSample = NormalMap.Sample(Sampler, InTextureCoordinate).xyz;
         InNormal = NormalSample * 2.0f - 1.0f;
-        InNormal = mul(InNormal, TangentToWorld);
+        InNormal = normalize(mul(InNormal, TangentToWorld));
     }
 
     const float3 VectorToLight = Position - InWorldPosition;

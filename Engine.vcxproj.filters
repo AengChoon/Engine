@@ -164,6 +164,9 @@
     <ClCompile Include="VertexBuffer.cpp">
       <Filter>Source Files\Bindables</Filter>
     </ClCompile>
+    <ClCompile Include="Plane.cpp">
+      <Filter>Source Files\Drawable</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineWin.h">
@@ -551,6 +554,12 @@
       <Filter>Header Files\Bindables</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
+      <Filter>Header Files\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaneGeometry.h">
+      <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Plane.h">
       <Filter>Header Files\Drawable</Filter>
     </ClInclude>
   </ItemGroup>

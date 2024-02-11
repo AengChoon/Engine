@@ -114,6 +114,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PixelShader.cpp" />
+    <ClCompile Include="Plane.cpp" />
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Sampler.cpp" />
     <ClCompile Include="SolidSphere.cpp" />
@@ -245,6 +246,8 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="PixelShader.h" />
+    <ClInclude Include="Plane.h" />
+    <ClInclude Include="PlaneGeometry.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="Sampler.h" />
     <ClInclude Include="SolidSphere.h" />

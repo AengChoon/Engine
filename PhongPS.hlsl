@@ -11,10 +11,9 @@ cbuffer Light
 
 cbuffer Material
 {
-    float3 Color;
+    float4 Color;
     float SpecularIntensity;
     float SpecularPower;
-    float Padding[2];
 }
 
 cbuffer Camera
@@ -22,8 +21,12 @@ cbuffer Camera
     float3 CameraPosition;
 }
 
-float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Normal) : SV_TARGET
+float4 main(const float3 InWorldPosition : Position,
+			float3 InWorldNormal : Normal)
+			: SV_TARGET
 {
+    InWorldNormal = normalize(InWorldNormal);
+
     const float3 VectorToLight = Position - InWorldPosition;
     const float DistanceToLight = length(VectorToLight);
     const float3 DirectionToLight = VectorToLight / DistanceToLight;
@@ -32,12 +35,12 @@ float4 main(const float3 InWorldPosition : Position, const float3 InNormal : Nor
 							  LinearAttenuation * DistanceToLight +
 							  ConstantAttenuation);
 
-    const float3 Diffuse = DiffuseColor * DiffuseStrength * Attenuation * max(0.0f, dot(DirectionToLight, InNormal));
+    const float3 Diffuse = DiffuseColor * DiffuseStrength * Attenuation * max(0.0f, dot(DirectionToLight, InWorldNormal));
 
-    const float3 VectorToLightProjectedToNormal = InNormal * dot(VectorToLight, InNormal);
+    const float3 VectorToLightProjectedToNormal = InWorldNormal * dot(VectorToLight, InWorldNormal);
     // R = 2 * (L  N) - L
     const float3 VectorToLightReflected = -VectorToLight + 2.0f * VectorToLightProjectedToNormal;
     const float3 Specular = Attenuation * (DiffuseColor * DiffuseStrength) * SpecularIntensity * pow(max(0.0f, dot(normalize(VectorToLightReflected), normalize(CameraPosition - InWorldPosition))), SpecularPower);
 
-    return float4(saturate((Diffuse + AmbientColor) * Color + Specular), 1.0f);
+    return float4(saturate((Diffuse + AmbientColor) * Color.rgb + Specular), 1.0f);
 }
