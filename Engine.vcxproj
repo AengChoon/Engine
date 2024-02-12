@@ -366,6 +366,8 @@
     <None Include="include\assimp\SmoothingGroups.inl" />
     <None Include="include\assimp\vector2.inl" />
     <None Include="include\assimp\vector3.inl" />
+    <None Include="PointLight.hlsli" />
+    <None Include="ShaderOperations.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

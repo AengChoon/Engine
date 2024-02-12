@@ -1,13 +1,5 @@
-cbuffer Light
-{
-    float3 Position;
-    float3 AmbientColor;
-    float3 DiffuseColor;
-    float DiffuseStrength;
-    float QuadraticAttenuation;
-    float LinearAttenuation;
-    float ConstantAttenuation;
-}
+#include "PointLight.hlsli"
+#include "ShaderOperations.hlsli"
 
 cbuffer Material
 {
@@ -31,20 +23,15 @@ float4 main(const float3 InWorldPosition : Position,
 {
     InWorldNormal = normalize(InWorldNormal);
 
-    const float3 VectorToLight = Position - InWorldPosition;
+    const float3 VectorToLight = LightWorldPosition - InWorldPosition;
     const float DistanceToLight = length(VectorToLight);
     const float3 DirectionToLight = VectorToLight / DistanceToLight;
 
-    const float Attenuation = 1.0f / (QuadraticAttenuation * (DistanceToLight * DistanceToLight) +
-							  LinearAttenuation * DistanceToLight +
-							  ConstantAttenuation);
+    const float Attenuation = CalcAttenuate(QuadraticAttenuation, LinearAttenuation, ConstantAttenuation, DistanceToLight);
 
-    const float3 Diffuse = DiffuseColor * DiffuseStrength * Attenuation * max(0.0f, dot(DirectionToLight, InWorldNormal));
+    const float3 Diffuse = CalcDiffuse(DiffuseColor, DiffuseStrength, Attenuation, DirectionToLight, InWorldNormal);
 
-    const float3 VectorToLightProjectedToNormal = InWorldNormal * dot(VectorToLight, InWorldNormal);
-    // R = 2 * (L  N) - L
-    const float3 VectorToLightReflected = -VectorToLight + 2.0f * VectorToLightProjectedToNormal;
-    const float3 Specular = Attenuation * (DiffuseColor * DiffuseStrength) * SpecularIntensity * pow(max(0.0f, dot(normalize(VectorToLightReflected), normalize(CameraPosition - InWorldPosition))), SpecularPower);
+    const float3 Specular = CalcSpeculate(DiffuseColor, 1.0f, InWorldNormal, VectorToLight, CameraPosition - InWorldPosition, Attenuation, SpecularPower);
 
     return float4(saturate((Diffuse + AmbientColor) * Texture.Sample(Sampler, InTextureCoordinate).rgb + Specular), 1.0f);
 }

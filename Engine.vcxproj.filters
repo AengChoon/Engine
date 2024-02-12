@@ -645,5 +645,11 @@
     <None Include="include\assimp\vector3.inl">
       <Filter>Includes\Assimp</Filter>
     </None>
+    <None Include="PointLight.hlsli">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="ShaderOperations.hlsli">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

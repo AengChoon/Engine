@@ -14,20 +14,22 @@ Plane::Plane(const Graphics& InGraphics, const float InSize)
 	Bind(IndexBuffer::Resolve(InGraphics, GeometryTag, Model.Indices));
 
 	Bind(Texture::Resolve(InGraphics, "Images\\brickwall.jpg"));
+	Bind(Texture::Resolve(InGraphics, "Images\\brickwall_normal.jpg"));
 
 	Bind(std::make_shared<Sampler>(InGraphics));
 
-	auto ModelVertexShader = VertexShader::Resolve(InGraphics, "DiffusePhongVS.cso");
+	auto ModelVertexShader = VertexShader::Resolve(InGraphics, "DiffuseNormalPhongVS.cso");
 	auto ModelVertexShaderBlob = ModelVertexShader->GetByteCode();
 	Bind(std::move(ModelVertexShader));
 
-	Bind(PixelShader::Resolve(InGraphics, "DiffusePhongPS.cso"));
+	Bind(PixelShader::Resolve(InGraphics, "DiffuseNormalPhongPS.cso"));
 
 	struct PSMaterialConstant
 	{
 		float specularIntensity = 0.1f;
 		float specularPower = 20.0f;
-		float padding[2];
+		BOOL normalMappingEnabled = TRUE;
+		float padding[1];
 	} ModelMaterialConstants;
 
 	struct PSCameraConstants

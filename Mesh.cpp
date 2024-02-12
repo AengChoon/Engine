@@ -195,7 +195,7 @@ Model::~Model() = default;
 
 std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh, aiMaterial const* const* InMaterials)
 {
-	const std::string& BaseDirectory {R"(Models\gobber\)"};
+	const std::string& BaseDirectory {R"(Models\nanosuit_textured\)"};
 
 	std::vector<std::shared_ptr<Bindable>> Bindables;
 	bool bHasDiffuseMap {false};
@@ -234,7 +234,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 	}
 
 	const auto MeshTag {BaseDirectory + "$" + InMesh.mName.C_Str()};
-	constexpr float Scale {6.0f};
+	constexpr float Scale {1.0f};
 
 	if (bHasDiffuseMap && bHasNormalMap && bHasSpecularMap)
 	{
@@ -430,7 +430,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 
 		struct PSDiffuseMaterialConstants
 		{
-			float SpecularIntensity {0.18f};
+			float SpecularIntensity {0.01f};
 			float SpecularPower;
 			float Padding[2];
 		} DiffuseMaterialConstants;

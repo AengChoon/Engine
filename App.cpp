@@ -11,7 +11,7 @@ App::App()
 
 	Light = std::make_unique<PointLight>(MyWindow.GetGraphics());
 
-	// Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj");
+	Nano = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj");
 	// Nano2 = std::make_unique<Model>(MyWindow.GetGraphics(),"Models\\nanosuit_textured\\nanosuit.obj");
 }
 
@@ -35,19 +35,13 @@ void App::DoFrame()
 	MyWindow.GetGraphics().BeginFrame();
 
 	Light->Bind(MyWindow.GetGraphics(), MyCamera.GetMatrix());
-	MyPlane = std::make_unique<Plane>(MyWindow.GetGraphics(), 3.0f);
-	MyPlane->SetPosition({1.0f, 17.0f, -1.0f});
 
-	// Nano->Draw(MyWindow.GetGraphics());
-	// Nano2->Draw(MyWindow.GetGraphics());
-	MyPlane->Draw(MyWindow.GetGraphics());
+	Nano->Draw(MyWindow.GetGraphics());
 	Light->Draw(MyWindow.GetGraphics());
 
 	MyCamera.ShowControlWindow();
 	Light->ShowControlWindow();
-	// Nano->ShowWindow("Model 1");
-	// Nano2->ShowWindow("Model 2");
-	// Gobber->ShowWindow("Gobber");
+	Nano->ShowWindow("Model 1");
 
 	while (const auto Event = MyWindow.MyKeyboard.ReadKey())
 	{
