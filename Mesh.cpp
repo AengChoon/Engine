@@ -168,12 +168,12 @@ private:
 	std::unordered_map<int, TransformParameters> NodeTransforms;
 };
 
-Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
+Model::Model(const Graphics& InGraphics, const std::string_view InPath)
 {
 	Assimp::Importer Importer;
 	const auto* Scene = Importer.ReadFile
 	(
-		InFileName.data(),
+		InPath.data(),
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_ConvertToLeftHanded |
@@ -183,7 +183,7 @@ Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
 
 	for (size_t MeshIndex = 0; MeshIndex < Scene->mNumMeshes; ++MeshIndex)
 	{
-		Meshes.push_back(ParseMesh(InGraphics, *Scene->mMeshes[MeshIndex], Scene->mMaterials));
+		Meshes.push_back(ParseMesh(InGraphics, *Scene->mMeshes[MeshIndex], Scene->mMaterials, InPath));
 	}
 
 	int NextID = 0;
@@ -193,9 +193,9 @@ Model::Model(const Graphics& InGraphics, const std::string_view InFileName)
 
 Model::~Model() = default;
 
-std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh, aiMaterial const* const* InMaterials)
+std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh, aiMaterial const* const* InMaterials, const std::filesystem::path& InPath)
 {
-	const std::string& BaseDirectory {R"(Models\nanosuit_textured\)"};
+	const std::string& RootPath {InPath.parent_path().string() + "\\"};
 
 	std::vector<std::shared_ptr<Bindable>> Bindables;
 	bool bHasDiffuseMap {false};
@@ -208,19 +208,19 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 
 	if (Material.GetTexture(aiTextureType_DIFFUSE, 0, &TextureFileName) == aiReturn_SUCCESS)
 	{
-		Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str()));
+		Bindables.push_back(Texture::Resolve(InGraphics, RootPath + TextureFileName.C_Str()));
 		bHasDiffuseMap = true;
 	}
 
 	if (Material.GetTexture(aiTextureType_NORMALS, 0, &TextureFileName) == aiReturn_SUCCESS)
 	{
-		Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str(), 1));
+		Bindables.push_back(Texture::Resolve(InGraphics, RootPath + TextureFileName.C_Str(), 1));
 		bHasNormalMap = true;
 	}
 
 	if (Material.GetTexture(aiTextureType_SPECULAR, 0, &TextureFileName) == aiReturn_SUCCESS)
 	{
-		Bindables.push_back(Texture::Resolve(InGraphics, BaseDirectory + TextureFileName.C_Str(), 2));
+		Bindables.push_back(Texture::Resolve(InGraphics, RootPath + TextureFileName.C_Str(), 2));
 		bHasSpecularMap = true;
 	}
 	else
@@ -233,7 +233,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(const Graphics& InGraphics, const aiMesh&
 		Bindables.push_back(Sampler::Resolve(InGraphics));
 	}
 
-	const auto MeshTag {BaseDirectory + "$" + InMesh.mName.C_Str()};
+	const auto MeshTag {RootPath + "$" + InMesh.mName.C_Str()};
 	constexpr float Scale {1.0f};
 
 	if (bHasDiffuseMap && bHasNormalMap && bHasSpecularMap)

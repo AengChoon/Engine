@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <memory>
 #include <string_view>
 #include "Drawable.h"
@@ -46,10 +47,11 @@ private:
 class Model
 {
 public:
-	Model(const Graphics& InGraphics, std::string_view InFileName);
+	Model(const Graphics& InGraphics, std::string_view InPath);
 	~Model();
 
-	static std::unique_ptr<Mesh> ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh, aiMaterial const* const* InMaterials);
+	static std::unique_ptr<Mesh> ParseMesh(const Graphics& InGraphics, const aiMesh& InMesh,
+	                                       aiMaterial const* const* InMaterials, const std::filesystem::path& InPath);
 	std::unique_ptr<Node> ParseNode(int& InNextID, const aiNode& InNode);
 	void Draw(const Graphics& InGraphics) const;
 	void ShowWindow(std::string_view InWindowName = {}) const;
